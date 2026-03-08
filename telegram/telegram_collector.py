@@ -60,4 +60,5 @@ async def main():
 
     print(f"Collected {len(df)} posts. Saved to {OUTPUT_FILE}")
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -4,7 +4,7 @@ import os
 import asyncio
 from telethon import TelegramClient
 from dotenv import load_dotenv
-from text_cleaner import clean_text
+from text_cleaner import clean_text as clean
 from event_detector import detect_events
 
 load_dotenv()
@@ -18,7 +18,7 @@ CHANNELS = [
     "hromadske_ua", "war_monitor", "nexta_live", "GeneralStaffZSU", "kpszsu"
 ]
 
-OUTPUT_FILE = os.path.join(os.getcwd(), "war_prediction", "telegram_data_daily.csv")
+OUTPUT_FILE = "telegram_data_daily.csv"
 
 def load_existing_ids():
     if os.path.exists(OUTPUT_FILE):
@@ -26,10 +26,8 @@ def load_existing_ids():
         return set(df["message_id"].tolist())
     return set()
 
-
 async def main():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] Start collecting...")
-    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
 
     existing_ids = load_existing_ids()
     since_date = datetime.now(timezone.utc) - timedelta(days=1)
@@ -45,7 +43,7 @@ async def main():
                         continue
                     if not message.text:
                         continue
-                    clean_text = clean_text(message.text)
+                    clean_text = clean(message.text)
                     events = detect_events(clean_text)
                     if not events:
                         continue

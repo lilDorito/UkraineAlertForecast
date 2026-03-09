@@ -12,9 +12,9 @@ import shutil
 from datetime import date, timedelta
 import calendar
 
-DOWNLOAD_DIR = os.path.abspath("alert_downloads")
-CHECKPOINT_FILE = "alerts_checkpoint.json"
-OUTPUT_DIR = os.path.abspath("alert_csvs")
+DOWNLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "alarms", "alert_downloads")
+CHECKPOINT_FILE = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "alarms", "alerts_checkpoint.json")
+OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "datasets", "alarms", "alert_csvs")
 
 def get_screen_size():
     if sys.platform.startswith("win"):

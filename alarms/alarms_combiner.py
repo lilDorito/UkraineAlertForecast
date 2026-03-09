@@ -4,7 +4,7 @@ import glob
 import pandas as pd
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from utils.regions import REGIONS, REGION_FIXES
+from util.regions import REGIONS, REGION_FIXES
 
 INPUT_DIR = os.path.abspath("alert_csvs")
 OUTPUT_FILE = os.path.abspath("alarms_combined.csv")

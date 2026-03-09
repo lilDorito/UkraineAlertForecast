@@ -4,16 +4,20 @@ from bs4 import BeautifulSoup
 import csv
 import os
 
-OUTPUT_FILE = "isw_data.csv"
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OUTPUT_FILE = os.path.join(ROOT, "datasets", "isw", "isw_data.csv")
 
 WEB_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                  '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
 }
 
 def top_line_check(top_line: str) -> bool:
-    banned_words = ["Note: ", "https:", "Click", "to see ISW's", "interactive map",
-                    "This map", "Karolina", "Kateryna", "to access ISW's", "These maps complement",
-                    "ISW will update this time-lapse map", "Grace", "Frederick", "Christina", "ISW"]
+    banned_words = [
+        "Note: ", "https:", "Click", "to see ISW's", "interactive map",
+        "This map", "Karolina", "Kateryna", "to access ISW's", "These maps complement",
+        "ISW will update this time-lapse map", "Grace", "Frederick", "Christina", "ISW"
+    ]
     return 70 < len(top_line) < 350 and not any(word in top_line for word in banned_words)
 
 def get_links(links: list) -> None:
@@ -68,6 +72,7 @@ def load_existing_dates() -> set:
         return {row["date"] for row in reader}
 
 def append_rows(rows: list) -> None:
+    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     file_exists = os.path.exists(OUTPUT_FILE)
     with open(OUTPUT_FILE, "a", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f, delimiter=";")

@@ -1,9 +1,12 @@
 import requests
 import pandas as pd
 from datetime import date, timedelta, datetime
+from dotenv import load_dotenv
 import os
 import json
 import time
+
+load_dotenv()
 
 API_KEY = os.getenv("UKRAINE_ALARM_API_KEY")
 BASE_URL = "https://api.ukrainealarm.com/api/v3"

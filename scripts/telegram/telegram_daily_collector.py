@@ -11,7 +11,7 @@ OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data_daily.cs
 SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
 LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(ROOT, "scripts", "util"))
 from text_cleaner import clean_text as clean
 from event_detector import detect_events
 

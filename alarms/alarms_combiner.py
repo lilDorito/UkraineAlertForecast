@@ -6,8 +6,10 @@ import pandas as pd
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import REGIONS, REGION_FIXES
 
-INPUT_DIR = os.path.abspath("alert_csvs")
-OUTPUT_FILE = os.path.abspath("alarms_combined.csv")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+INPUT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "alert_csvs"))
+OUTPUT_FILE = os.path.abspath(os.path.join(BASE_DIR, "..", "alarms_combined.csv"))
 
 COLUMNS = {
     "Оголошено о": "alarm_start",

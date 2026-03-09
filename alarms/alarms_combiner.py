@@ -1,0 +1,76 @@
+import os
+import sys
+import glob
+import pandas as pd
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from utils.regions import REGIONS, REGION_FIXES
+
+INPUT_DIR = os.path.abspath("alert_csvs")
+OUTPUT_FILE = os.path.abspath("alarms_combined.csv")
+
+COLUMNS = {
+    "Оголошено о": "alarm_start",
+    "Закінчено о": "alarm_end",
+    "Регіон": "region",
+    "Тип": "alarm_type",
+}
+
+KEEP = ["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "duration_min"]
+
+def main():
+    files = sorted(glob.glob(os.path.join(INPUT_DIR, "alerts_*.csv")))
+
+    if not files:
+        print(f"[!] No CSV files found in {INPUT_DIR}")
+        return
+
+    print(f"[i] Found {len(files)} files. Combining...")
+
+    dfs = []
+    errors = []
+
+    for path in files:
+        try:
+            df = pd.read_csv(path, encoding="utf-8", usecols=COLUMNS.keys())
+            df = df.rename(columns=COLUMNS)
+            df["alarm_start"] = pd.to_datetime(df["alarm_start"], format="%d.%m.%Y, %H:%M:%S", errors="coerce")
+            df["alarm_end"] = pd.to_datetime(df["alarm_end"],   format="%d.%m.%Y, %H:%M:%S", errors="coerce")
+            df["duration_min"] = (df["alarm_end"] - df["alarm_start"]).dt.total_seconds() / 60
+            dfs.append(df)
+        except Exception as e:
+            errors.append((path, str(e)))
+            print(f"[!] Skipped {os.path.basename(path)}: {e}")
+
+    if not dfs:
+        print("[!] No data loaded.")
+        return
+
+    combined = pd.concat(dfs, ignore_index=True)
+
+    combined["region"] = combined["region"].map(lambda x: REGION_FIXES.get(x, x))
+
+    before = len(combined)
+    combined = combined[combined["region"].isin(REGIONS.keys())]
+    dropped = before - len(combined)
+    if dropped:
+        print(f"[i] Dropped {dropped} rows with unknown regions")
+
+    combined["region_en"] = combined["region"].map(lambda x: REGIONS[x][2])
+
+    combined = combined[KEEP]
+    combined = combined.sort_values("alarm_start").reset_index(drop=True)
+    combined.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
+
+    print(f"\n[✓] Combined {len(dfs)} files -> {len(combined):,} rows")
+    print(f"[✓] Regions: {combined['region'].nunique()} unique")
+    print(f"[✓] Date range: {combined['alarm_start'].min()} -> {combined['alarm_start'].max()}")
+    print(f"[✓] Saved to: {OUTPUT_FILE}")
+
+    if errors:
+        print(f"\n[!] {len(errors)} files had errors:")
+        for path, err in errors:
+            print(f"    {os.path.basename(path)}: {err}")
+
+if __name__ == "__main__":
+    main()

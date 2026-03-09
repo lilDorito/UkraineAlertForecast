@@ -4,7 +4,7 @@ import glob
 import pandas as pd
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
-from utils.regions import REGIONS, REGION_FIXES
+from util.regions import REGIONS, REGION_FIXES
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 

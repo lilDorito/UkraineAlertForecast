@@ -1,3 +1,5 @@
+# Author credit: https://github.com/SanGreel/reddit-dump-extractor
+
 #!/usr/bin/env python3
 import zstandard
 import os

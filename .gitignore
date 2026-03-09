@@ -230,3 +230,15 @@ logs/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Project-specific
+datasets/
+alert_csvs/
+
+# Telegram session files
+*.session
+*.session-journal
+
+# Selenium / browser
+chromedriver
+geckodriver

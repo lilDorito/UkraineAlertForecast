@@ -10,7 +10,7 @@ ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data.csv")
 SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
 
-sys.path.append(os.path.dirname(__file__))
+sys.path.append(os.path.join(ROOT, "scripts", "util"))
 from text_cleaner import clean_text as clean
 from event_detector import detect_events
 

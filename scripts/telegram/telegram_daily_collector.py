@@ -1,14 +1,21 @@
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 import os
+import sys
 import asyncio
 from telethon import TelegramClient
 from dotenv import load_dotenv
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data_daily.csv")
+SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
+LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
+
+sys.path.append(os.path.dirname(__file__))
 from text_cleaner import clean_text as clean
 from event_detector import detect_events
 
-load_dotenv()
-
+load_dotenv(os.path.join(ROOT, ".env"))
 API_ID = int(os.getenv("TELEGRAM_API_ID"))
 API_HASH = os.getenv("TELEGRAM_API_HASH")
 
@@ -18,7 +25,13 @@ CHANNELS = [
     "hromadske_ua", "war_monitor", "nexta_live", "GeneralStaffZSU", "kpszsu"
 ]
 
-OUTPUT_FILE = "telegram_data_daily.csv"
+def log(msg: str):
+    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    line = f"[{timestamp}] {msg}"
+    print(line)
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
 
 def load_existing_ids():
     if os.path.exists(OUTPUT_FILE):
@@ -27,13 +40,13 @@ def load_existing_ids():
     return set()
 
 async def main():
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] Start collecting...")
+    log("> Telegram daily collector starting <")
 
     existing_ids = load_existing_ids()
     since_date = datetime.now(timezone.utc) - timedelta(days=1)
     data = []
 
-    async with TelegramClient("session", API_ID, API_HASH) as client:
+    async with TelegramClient(SESSION, API_ID, API_HASH) as client:
         for channel in CHANNELS:
             try:
                 async for message in client.iter_messages(channel):
@@ -55,17 +68,18 @@ async def main():
                         "events": ",".join(sorted(events))
                     })
             except Exception as e:
-                print(f"Error in {channel}: {e}")
+                log(f"[!] Error in {channel}: {e}")
 
     if not data:
-        print("Nothing collected.")
+        log("Nothing collected.")
         return
 
     df = pd.DataFrame(data)
     file_exists = os.path.exists(OUTPUT_FILE)
+    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     df.to_csv(OUTPUT_FILE, mode="a", index=False, header=not file_exists, encoding="utf-8")
-
-    print(f"Added {len(df)} new posts.")
+    log(f"Added {len(df)} new posts → {OUTPUT_FILE}")
+    log("Done.\n")
 
 if __name__ == "__main__":
     asyncio.run(main())

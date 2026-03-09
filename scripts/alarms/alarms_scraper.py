@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 
 import time
 import os
+import sys
 import glob
 import json
 import shutil
@@ -15,21 +16,43 @@ DOWNLOAD_DIR = os.path.abspath("alert_downloads")
 CHECKPOINT_FILE = "alerts_checkpoint.json"
 OUTPUT_DIR = os.path.abspath("alert_csvs")
 
-def make_driver():
+def get_screen_size():
+    if sys.platform.startswith("win"):
+        import ctypes
+        user32 = ctypes.windll.user32
+        return user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    elif sys.platform.startswith("linux") or sys.platform.startswith("darwin"):
+        try:
+            import tkinter as tk
+            root = tk.Tk()
+            root.withdraw()
+            return root.winfo_screenwidth(), root.winfo_screenheight()
+        except:
+            return 1920, 1080
+    else:
+        return 1920, 1080
+
+def make_driver(percent_width=80, percent_height=80):
     options = Options()
+    
+    screen_width, screen_height = get_screen_size()
+    width = int(screen_width * percent_width / 100)
+    height = int(screen_height * percent_height / 100)
+    options.add_argument(f"--window-size={width},{height}")
     options.add_argument("--no-sandbox")
-    options.add_argument("--window-size=1920,1080")
     options.add_argument("--disable-blink-features=AutomationControlled")
 
+    DOWNLOAD_DIR = os.path.abspath("alert_downloads")
     prefs = {
         "download.default_directory": DOWNLOAD_DIR,
         "download.prompt_for_download": False,
         "download.directory_upgrade": True,
         "safebrowsing.enabled": True,
     }
-
     options.add_experimental_option("prefs", prefs)
-    return webdriver.Chrome(options=options)
+    
+    driver = webdriver.Chrome(options=options)
+    return driver
 
 def wait_for_app(driver, timeout=40):
     WebDriverWait(driver, timeout).until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".vc-container")) > 0)

@@ -3,8 +3,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OUTPUT_DIR="$SCRIPT_DIR/output"
-DUMPS_DIR="$SCRIPT_DIR/dumps"
+ROOT="$SCRIPT_DIR/../.."
+OUTPUT_DIR="$ROOT/datasets/reddit/raw"
+DUMPS_DIR="$ROOT/datasets/reddit/dumps"
 
 COMMENTS_SRC="${COMMENTS_SRC:-$SCRIPT_DIR/comments}"
 SUBMISSIONS_SRC="${SUBMISSIONS_SRC:-$SCRIPT_DIR/submissions}"

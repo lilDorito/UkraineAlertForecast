@@ -3,10 +3,10 @@ import os
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-INPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
+INPUT_DIR = os.path.join(ROOT, "datasets", "reddit", "raw")
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "reddit", "reddit_data.csv")
 
-sys.path.append(os.path.join(ROOT, "scripts", "util"))
+sys.path.append(os.path.join(ROOT, "scripts"))
 from util.text_cleaner import clean_text as clean
 from util.event_detector import detect_events
 

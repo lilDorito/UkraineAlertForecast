@@ -7,8 +7,8 @@ INPUT_DIR = os.path.join(os.path.dirname(__file__), "output")
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "reddit", "reddit_data.csv")
 
 sys.path.append(os.path.join(ROOT, "scripts", "util"))
-from text_cleaner import clean_text as clean
-from event_detector import detect_events
+from util.text_cleaner import clean_text as clean
+from util.event_detector import detect_events
 
 def process_file(path: str, source: str) -> pd.DataFrame:
     df = pd.read_csv(path, dtype=str)

@@ -11,8 +11,8 @@ OUTPUT_FILE = os.path.join(ROOT, "datasets", "reddit", "reddit_data.csv")
 LOG_FILE = os.path.join(ROOT, "logs", "reddit", "daily_collector.log")
 
 sys.path.append(os.path.join(ROOT, "scripts", "util"))
-from text_cleaner import clean_text as clean
-from event_detector import detect_events
+from util.text_cleaner import clean_text as clean
+from util.event_detector import detect_events
 
 SUBREDDITS = ["ukraine", "worldnews", "combatfootage"]
 SINCE = datetime.now(timezone.utc) - timedelta(days=1)

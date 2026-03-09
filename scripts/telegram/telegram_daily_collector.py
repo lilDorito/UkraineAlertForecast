@@ -12,8 +12,8 @@ SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
 LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
 
 sys.path.append(os.path.join(ROOT, "scripts", "util"))
-from text_cleaner import clean_text as clean
-from event_detector import detect_events
+from util.text_cleaner import clean_text as clean
+from util.event_detector import detect_events
 
 load_dotenv(os.path.join(ROOT, ".env"))
 API_ID = int(os.getenv("TELEGRAM_API_ID"))

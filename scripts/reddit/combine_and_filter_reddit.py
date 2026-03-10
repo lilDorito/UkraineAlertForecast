@@ -10,31 +10,26 @@ sys.path.append(os.path.join(ROOT, "scripts"))
 from util.text_cleaner import clean_text as clean
 from util.event_detector import detect_events
 
-def process_file(path: str, source: str) -> pd.DataFrame:
-    df = pd.read_csv(path, dtype=str)
-    df = df[["id", "author", "subreddit", "created_utc", "score", "body"]].copy()
-    df["source"] = source
+COLUMNS = ["id", "author", "subreddit", "created_utc", "score", "body"]
+
+def process_file(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path, dtype=str, header=None, names=COLUMNS)
+    df["source"] = "RC"
     df = df.dropna(subset=["body"])
     df = df[df["body"].str.strip() != ""]
     df = df[~df["body"].isin(["[removed]", "[deleted]"])]
-    df["body"]   = df["body"].apply(clean)
+    df["body"] = df["body"].apply(clean)
     df["events"] = df["body"].apply(detect_events).apply(lambda e: ",".join(sorted(e)))
     df = df[df["events"] != ""]
     return df
 
 frames = []
 for filename in sorted(os.listdir(INPUT_DIR)):
-    if not filename.endswith(".csv"):
+    if not filename.startswith("RC_") or not filename.endswith(".csv"):
         continue
     path = os.path.join(INPUT_DIR, filename)
-    if filename.startswith("RC_"):
-        source = "RC"
-    elif filename.startswith("RS_"):
-        source = "RS"
-    else:
-        continue
     print(f"Processing {filename}...", end=" ", flush=True)
-    df = process_file(path, source)
+    df = process_file(path)
     print(f"{len(df)} rows matched")
     frames.append(df)
 

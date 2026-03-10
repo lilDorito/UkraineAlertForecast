@@ -8,8 +8,7 @@ OUTPUT_DIR="$ROOT/datasets/reddit/raw"
 DUMPS_DIR="$ROOT/datasets/reddit/dumps"
 
 COMMENTS_SRC="${COMMENTS_SRC:-$SCRIPT_DIR/comments}"
-SUBMISSIONS_SRC="${SUBMISSIONS_SRC:-$SCRIPT_DIR/submissions}"
-SUBREDDITS="${SUBREDDITS:-ukraine,worldnews,combatfootage}"
+SUBREDDITS="${SUBREDDITS:-ukraine,worldnews}"
 
 mkdir -p "$OUTPUT_DIR"
 mkdir -p "$DUMPS_DIR"
@@ -73,14 +72,6 @@ for F in "$COMMENTS_SRC"/RC_*.zst; do
     process_file "$F"
 done
 echo "[$(date '+%H:%M:%S')] All comments processed!"
-
-echo ""
-echo "=== SUBMISSIONS (RS files) ==="
-for F in "$SUBMISSIONS_SRC"/RS_*.zst; do
-    [ -f "$F" ] || continue
-    process_file "$F"
-done
-echo "[$(date '+%H:%M:%S')] All submissions processed!"
 
 BATCH_END=$(date +%s)
 BATCH_ELAPSED=$(( BATCH_END - BATCH_START ))

@@ -242,3 +242,9 @@ alert_csvs/
 # Selenium / browser
 chromedriver
 geckodriver
+
+# Other
+scratch/
+notebooks/
+*.ipynb
+.ipynb_checkpoints/

@@ -5,10 +5,11 @@ from datetime import date, datetime
 from bs4 import BeautifulSoup
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OUTPUT_FILE = os.path.join(ROOT, "datasets", "isw", "isw_daily.csv")
 LOG_FILE = os.path.join(ROOT, "logs", "isw", "daily_collector.log")
 
 sys.path.append(os.path.dirname(__file__))
-from isw_scraper import WEB_HEADERS, top_line_check, scrape_toplines, load_existing_dates, append_rows
+from isw_scraper import WEB_HEADERS, scrape_toplines, load_existing_dates
 
 def log(msg: str):
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
@@ -40,6 +41,16 @@ def get_latest_link() -> tuple[date, str] | None:
             return link_date, article_link
     return None
 
+def append_row(report_date: date, toplines: str) -> None:
+    import csv
+    os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+    file_exists = os.path.exists(OUTPUT_FILE)
+    with open(OUTPUT_FILE, "a", newline="", encoding="utf-8-sig") as f:
+        writer = csv.writer(f, delimiter=";")
+        if not file_exists:
+            writer.writerow(["date", "toplines"])
+        writer.writerow([str(report_date), toplines])
+
 def run_daily() -> None:
     log("> ISW daily collector starting <")
 
@@ -57,8 +68,8 @@ def run_daily() -> None:
 
     try:
         toplines = scrape_toplines(link)
-        append_rows([[str(report_date), toplines]])
-        log(f"[+] Collected {report_date} - {len(toplines.split('/'))} toplines.")
+        append_row(report_date, toplines)
+        log(f"[+] Collected {report_date} - {len(toplines.split('/'))} toplines -> {OUTPUT_FILE}")
     except Exception as e:
         log(f"[!] Failed to scrape {report_date}: {e}")
 

@@ -7,11 +7,11 @@ from telethon import TelegramClient
 from dotenv import load_dotenv
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data_daily.csv")
+OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_daily.csv")
 SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
 LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
 
-sys.path.append(os.path.join(ROOT, "scripts", "util"))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.text_cleaner import clean_text as clean
 from util.event_detector import detect_events
 
@@ -42,14 +42,20 @@ def load_existing_ids():
 async def main():
     log("> Telegram daily collector starting <")
 
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    since_date = today - timedelta(days=1)
+    until_date = today
+    log(f"Window: {since_date.date()} 00:00 UTC → {until_date.date()} 00:00 UTC")
+
     existing_ids = load_existing_ids()
-    since_date = datetime.now(timezone.utc) - timedelta(days=1)
     data = []
 
     async with TelegramClient(SESSION, API_ID, API_HASH) as client:
         for channel in CHANNELS:
             try:
                 async for message in client.iter_messages(channel):
+                    if message.date >= until_date:
+                        continue
                     if message.date < since_date:
                         break
                     if message.id in existing_ids:
@@ -78,7 +84,7 @@ async def main():
     file_exists = os.path.exists(OUTPUT_FILE)
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     df.to_csv(OUTPUT_FILE, mode="a", index=False, header=not file_exists, encoding="utf-8")
-    log(f"Added {len(df)} new posts → {OUTPUT_FILE}")
+    log(f"Added {len(df)} new posts ({since_date.date()}) → {OUTPUT_FILE}")
     log("Done.\n")
 
 if __name__ == "__main__":

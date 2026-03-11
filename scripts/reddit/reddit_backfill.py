@@ -15,7 +15,7 @@ from util.event_detector import detect_events
 
 SUBREDDITS = ["ukraine", "worldnews"]
 SINCE = datetime(2026, 3, 1, tzinfo=timezone.utc)
-UNTIL = datetime(2026, 3, 10, tzinfo=timezone.utc)
+UNTIL = datetime(2026, 3, 11, tzinfo=timezone.utc)
 HEADERS = {"User-Agent": "conflict-event-backfill/1.0"}
 ARCTIC = "https://arctic-shift.photon-reddit.com/api"
 
@@ -38,10 +38,10 @@ def fetch_posts(subreddit):
         if not data:
             break
 
-        data.sort(key=lambda p: int(p.get("created_utc", 0)), reverse=True)
+        data.sort(key=lambda p: int(float(p.get("created_utc", 0))), reverse=True)
         posts.extend(data)
 
-        oldest_ts = int(data[-1]["created_utc"])
+        oldest_ts = int(float(data[-1]["created_utc"]))
         print(f"  ... {len(posts)} posts fetched, oldest at {datetime.fromtimestamp(oldest_ts, tz=timezone.utc)}")
 
         if oldest_ts <= since_ts:
@@ -53,7 +53,7 @@ def fetch_posts(subreddit):
 
 def fetch_comments(post_id):
     r = requests.get(f"{ARCTIC}/comments/search", headers=HEADERS,
-                     params={"link_id": f"t3_{post_id}", "limit": 500})
+                     params={"link_id": f"t3_{post_id}", "limit": 100})
     return r.json().get("data", []) if r.status_code == 200 else []
 
 def main():
@@ -78,10 +78,14 @@ def main():
             events = detect_events(cleaned)
             if events:
                 rows.append({
-                    "id": pid, "author": post.get("author"),
-                    "subreddit": subreddit, "created_utc": datetime.fromtimestamp(int(post.get("created_utc")), tz=timezone.utc),
-                    "score": post.get("score"), "body": cleaned,
-                    "events": ",".join(sorted(events)), "source": "RS"
+                    "id": pid,
+                    "author": post.get("author"),
+                    "subreddit": subreddit,
+                    "created_utc": datetime.fromtimestamp(int(float(post.get("created_utc"))), tz=timezone.utc),
+                    "score": post.get("score"),
+                    "body": cleaned,
+                    "source": "RS",
+                    "events": ",".join(sorted(events))
                 })
                 existing_ids.add(pid)
 
@@ -90,17 +94,21 @@ def main():
                 cid = str(comment.get("id", ""))
                 if cid in existing_ids:
                     continue
-                created = int(comment.get("created_utc", 0))
+                created = int(float(comment.get("created_utc", 0)))
                 if not (int(SINCE.timestamp()) <= created < int(UNTIL.timestamp())):
                     continue
                 cleaned_c = clean(comment.get("body", ""))
                 events_c = detect_events(cleaned_c)
                 if events_c:
                     rows.append({
-                        "id": cid, "author": comment.get("author"),
-                        "subreddit": subreddit, "created_utc": datetime.fromtimestamp(created, tz=timezone.utc),
-                        "score": comment.get("score"), "body": cleaned_c,
-                        "events": ",".join(sorted(events_c)), "source": "RC"
+                        "id": cid,
+                        "author": comment.get("author"),
+                        "subreddit": subreddit,
+                        "created_utc": datetime.fromtimestamp(created, tz=timezone.utc),
+                        "score": comment.get("score"),
+                        "body": cleaned_c,
+                        "source": "RC",
+                        "events": ",".join(sorted(events_c))
                     })
                     existing_ids.add(cid)
 
@@ -110,6 +118,7 @@ def main():
         df = pd.DataFrame(rows)
         file_exists = os.path.exists(OUTPUT_FILE)
         os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+        df = df.sort_values("created_utc").reset_index(drop=True)
         df.to_csv(OUTPUT_FILE, mode="a", index=False, header=not file_exists, encoding="utf-8-sig")
         print(f"\nDone - {len(df)} rows added to {OUTPUT_FILE}")
     else:

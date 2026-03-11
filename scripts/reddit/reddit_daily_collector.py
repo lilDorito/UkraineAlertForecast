@@ -44,14 +44,14 @@ def fetch_posts(subreddit):
             "limit": 100,
         })
         if r.status_code != 200:
-            log(f"[!] HTTP {r.status_code} on r/{subreddit} — {r.json()}")
+            log(f"[!] HTTP {r.status_code} on r/{subreddit} - {r.json()}")
             break
         data = r.json().get("data", [])
         if not data:
             break
-        data.sort(key=lambda p: int(p.get("created_utc", 0)), reverse=True)
+        data.sort(key=lambda p: int(float(p.get("created_utc", 0))), reverse=True)
         posts.extend(data)
-        oldest_ts = int(data[-1]["created_utc"])
+        oldest_ts = int(float(data[-1]["created_utc"]))
         if oldest_ts <= since_ts:
             break
         before_ts = oldest_ts
@@ -60,8 +60,8 @@ def fetch_posts(subreddit):
 
 def fetch_comments(post_id):
     r = requests.get(f"{ARCTIC}/comments/search", headers=HEADERS,
-                     params={"link_id": f"t3_{post_id}", "limit": 500})
-    return r.json().get("data", []) if r.status_code == 200 else []
+                     params={"link_id": f"t3_{post_id}", "limit": 100})
+    return r.json().get("data") or [] if r.status_code == 200 else []
 
 def main():
     log("> Reddit daily collector starting <")
@@ -87,11 +87,11 @@ def main():
                         "id": pid,
                         "author": post.get("author"),
                         "subreddit": subreddit,
-                        "created_utc": post.get("created_utc"),
+                        "created_utc": int(float(post.get("created_utc", 0))),
                         "score": post.get("score"),
                         "body": cleaned,
-                        "events": ",".join(sorted(events)),
-                        "source": "RS"
+                        "source": "RS",
+                        "events": ",".join(sorted(events))
                     })
                 seen_ids.add(pid)
 
@@ -100,7 +100,7 @@ def main():
                 cid = str(comment.get("id", ""))
                 if cid in seen_ids:
                     continue
-                created = int(comment.get("created_utc", 0))
+                created = int(float(comment.get("created_utc", 0)))
                 if not (since_ts <= created < until_ts):
                     continue
                 cleaned_c = clean(comment.get("body", ""))
@@ -114,8 +114,8 @@ def main():
                     "created_utc": created,
                     "score": comment.get("score"),
                     "body": cleaned_c,
-                    "events": ",".join(sorted(events_c)),
-                    "source": "RC"
+                    "source": "RC",
+                    "events": ",".join(sorted(events_c))
                 })
                 seen_ids.add(cid)
 
@@ -124,7 +124,9 @@ def main():
         return
 
     df = pd.DataFrame(rows)
+    df = df.sort_values("created_utc").reset_index(drop=True)
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
+    df["created_utc"] = pd.to_datetime(df["created_utc"], unit="s", utc=True).dt.tz_localize(None)
     df.to_csv(OUTPUT_FILE, mode="w", index=False, header=True, encoding="utf-8")
     log(f"Collected {len(df)} rows -> {OUTPUT_FILE}")
     log("Done.\n")

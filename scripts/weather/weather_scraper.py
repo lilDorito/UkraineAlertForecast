@@ -25,7 +25,7 @@ def build_weather_dataset(start_date: str) -> pd.DataFrame:
             "longitude": lon,
             "start_date": start_date,
             "end_date": yesterday,
-            "hourly": ["temperature_2m", "wind_speed_10m", "precipitation", "pressure_msl"],
+            "hourly": ["temperature_2m", "wind_speed_10m", "precipitation", "pressure_msl", "cloud_cover"],
             "timezone": "UTC",
         }
         try:
@@ -43,16 +43,43 @@ def build_weather_dataset(start_date: str) -> pd.DataFrame:
                     "wind": hourly["wind_speed_10m"][i],
                     "precip": hourly["precipitation"][i],
                     "pressure": hourly["pressure_msl"][i],
+                    "cloudcover": hourly["cloud_cover"][i],
                 })
             print(f"[+] {region_id} ({len(times)} rows)")
-            time.sleep(0.5)
+            time.sleep(3)
 
+        except requests.exceptions.HTTPError as e:
+            if response.status_code == 429:
+                print(f"[!] Rate limited on {region_id}, retrying in 60s...")
+                time.sleep(60)
+                try:
+                    response = requests.get(ARCHIVE_URL, params=params)
+                    response.raise_for_status()
+                    data = response.json()
+                    hourly = data.get("hourly", {})
+                    times = hourly.get("time", [])
+                    for i in range(len(times)):
+                        all_records.append({
+                            "region_id": region_id,
+                            "datetime": times[i],
+                            "temp": hourly["temperature_2m"][i],
+                            "wind": hourly["wind_speed_10m"][i],
+                            "precip": hourly["precipitation"][i],
+                            "pressure": hourly["pressure_msl"][i],
+                            "cloudcover": hourly["cloud_cover"][i],
+                        })
+                    print(f"[+] {region_id} ({len(times)} rows) [retry ok]")
+                    time.sleep(3)
+                except Exception as e2:
+                    print(f"[!] Retry failed for {region_id}: {e2}")
+            else:
+                print(f"[!] Error in {region_id}: {e}")
         except Exception as e:
             print(f"[!] Error in {region_id}: {e}")
 
     df = pd.DataFrame(all_records)
     os.makedirs(OUTPUT_DIR, exist_ok=True)
-    output_file = os.path.join(OUTPUT_DIR, f"weather_data.csv")
+    output_file = os.path.join(OUTPUT_DIR, "weather_data.csv")
     df.to_csv(output_file, index=False)
     print(f"[i] Done. {len(df):,} rows -> {output_file}")
     return df

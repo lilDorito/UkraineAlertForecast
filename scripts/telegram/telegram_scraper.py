@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 import sys
 import asyncio
@@ -24,6 +24,7 @@ CHANNELS = [
     "hromadske_ua", "war_monitor", "nexta_live", "GeneralStaffZSU", "kpszsu"
 ]
 SINCE_DATE = datetime(2022, 2, 24, tzinfo=timezone.utc)
+UNTIL_DATE = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
 def log(msg: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -31,6 +32,7 @@ def log(msg: str):
 
 async def main():
     log("Start collecting...")
+    log(f"Window: {SINCE_DATE.date()} -> {UNTIL_DATE.date()} (exclusive)")
 
     data = []
 
@@ -40,6 +42,8 @@ async def main():
             channel_count = 0
             try:
                 async for message in client.iter_messages(channel):
+                    if message.date >= UNTIL_DATE:
+                        continue
                     if message.date < SINCE_DATE:
                         break
                     if not message.text:

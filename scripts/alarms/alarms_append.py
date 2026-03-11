@@ -60,8 +60,8 @@ def main():
     log(f"Full: {len(full):,} rows | Daily: {len(daily):,} rows")
 
     for df in [full, daily]:
-        df["alarm_start"] = pd.to_datetime(df["alarm_start"])
-        df["alarm_end"] = pd.to_datetime(df["alarm_end"])
+        df["alarm_start"] = pd.to_datetime(df["alarm_start"], format="ISO8601")
+        df["alarm_end"] = pd.to_datetime(df["alarm_end"], format="ISO8601")
 
     combined = pd.concat([full, daily], ignore_index=True)
 
@@ -72,8 +72,8 @@ def main():
         .groupby(["region", "alarm_type", "_start_5min"], as_index=False)
         .agg(
             alarm_start = ("alarm_start", "min"),
-            alarm_end   = ("alarm_end",   "max"),
-            region_en   = ("region_en",   "first"),
+            alarm_end = ("alarm_end",   "max"),
+            region_en = ("region_en",   "first"),
         )
         .drop(columns=["_start_5min"])
     )

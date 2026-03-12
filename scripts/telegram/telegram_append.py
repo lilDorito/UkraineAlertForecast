@@ -28,7 +28,7 @@ def main():
     log(f"Full: {len(full):,} rows | Daily: {len(daily):,} rows")
 
     combined = pd.concat([full, daily], ignore_index=True)
-    combined["message_date"] = pd.to_datetime(combined["message_date"], utc=True).dt.tz_convert(None)
+    combined["message_date"] = pd.to_datetime(combined["message_date"], format='ISO8601', utc=True).dt.tz_localize(None)
 
     before = len(combined)
     combined.drop_duplicates(subset=["channel", "message_id"], keep="first", inplace=True)

@@ -40,4 +40,4 @@ if __name__ == "__main__":
     df = merge_sources(spine, weather, alarms, telegram, isw, reddit)
 
     print(f"Final shape: {df.shape}")
-    save_to_csv(df, PATHS["output"], alarms_path=PATHS["alarms_full"])
+    save_to_csv(df, PATHS["output"], alarms_path=PATHS["alarms_full"], date_filter=yesterday)

@@ -39,7 +39,7 @@ def process_weather(path: str) -> pd.DataFrame:
         cloudcover_mean=("cloudcover", "mean"),
     ).reset_index()
 
-def process_alarms(path: str) -> pd.DataFrame:
+def process_alarms(path: str, date_filter: pd.Timestamp = None) -> pd.DataFrame:
     df = pd.read_csv(path)
     df["alarm_start"] = pd.to_datetime(df["alarm_start"])
     df["alarm_end"] = pd.to_datetime(df["alarm_end"])
@@ -199,7 +199,7 @@ def merge_sources(
 
 # Save / append
 
-def save_to_csv(df: pd.DataFrame, path: str, alarms_path: str = None):
+def save_to_csv(df: pd.DataFrame, path: str, alarms_path: str = None, date_filter: pd.Timestamp = None):
     df["timestamp_hour"] = df["timestamp_hour"].astype(str)
     output = Path(path)
 
@@ -214,7 +214,7 @@ def save_to_csv(df: pd.DataFrame, path: str, alarms_path: str = None):
     if alarms_path:
         alarm_cols = [c for c in existing.columns if c.startswith("alarm")]
         existing = existing.drop(columns=alarm_cols, errors="ignore")
-        fresh_alarms = process_alarms(alarms_path)
+        fresh_alarms = process_alarms(alarms_path, date_filter=date_filter)
         fresh_alarms["timestamp_hour"] = fresh_alarms["timestamp_hour"].astype(str)
         existing = existing.merge(fresh_alarms, on=["timestamp_hour", "region"], how="left")
         alarm_num_cols = [c for c in fresh_alarms.columns if c not in ["timestamp_hour", "region"]]

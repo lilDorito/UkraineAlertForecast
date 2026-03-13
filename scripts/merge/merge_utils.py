@@ -137,6 +137,27 @@ def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
     print(f"  [telegram] done -> {len(result):,} rows")
     return result
 
+def process_reddit(path: str) -> pd.DataFrame:
+    df = pd.read_csv(path)
+    df["timestamp_hour"] = (
+        pd.to_datetime(df["created_utc"], utc=True)
+        .dt.tz_convert(None)
+        .dt.floor("h")
+    )
+
+    event_dummies = df["events"].str.get_dummies(sep=",").add_prefix("reddit_event_")
+    df = pd.concat([df, event_dummies], axis=1)
+    event_cols = list(event_dummies.columns)
+
+    agg_dict = {
+        "reddit_post_count": ("id", "count"),
+        "reddit_score_sum": ("score", "sum"),
+    }
+    for col in event_cols:
+        agg_dict[col] = (col, "sum")
+
+    return df.groupby("timestamp_hour").agg(**agg_dict).reset_index()
+
 def process_isw(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, sep=";")
     df["date"] = pd.to_datetime(df["date"])

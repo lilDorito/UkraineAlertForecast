@@ -39,6 +39,10 @@ REGION_RECORDS = [
     for name, (lat, lon, en) in REGIONS.items()
 ]
 
+UA_TO_EN = {ua: en for ua, (_, _, en) in REGIONS.items()}
+
+REGION_IDS = list(UA_TO_EN.values())
+
 if __name__ == "__main__":
     import pandas as pd
     df = pd.DataFrame(REGION_RECORDS)

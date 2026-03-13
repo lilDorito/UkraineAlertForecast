@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import os
 import sys
 import asyncio
@@ -8,11 +8,12 @@ from dotenv import load_dotenv
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data.csv")
-SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
+SESSION  = os.path.join(ROOT, "scripts", "telegram", "session")
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.text_cleaner import clean_text as clean
 from util.event_detector import detect_events
+from util.geo_tagger import extract_regions_batch
 
 load_dotenv(os.path.join(ROOT, ".env"))
 API_ID = int(os.getenv("TELEGRAM_API_ID"))
@@ -32,13 +33,13 @@ def log(msg: str):
 
 async def main():
     log("Start collecting...")
-    log(f"Window: {SINCE_DATE.date()} -> {UNTIL_DATE.date()} (exclusive)")
+    log(f"Window: {SINCE_DATE.date()} -> {UNTIL_DATE.date()}")
 
     data = []
 
     async with TelegramClient(SESSION, API_ID, API_HASH) as client:
         for channel in CHANNELS:
-            log(f"Fetching messages from channel: {channel}")
+            log(f"Fetching: {channel}")
             channel_count = 0
             try:
                 async for message in client.iter_messages(channel):
@@ -48,33 +49,44 @@ async def main():
                         break
                     if not message.text:
                         continue
+
                     clean_text = clean(message.text)
                     events = detect_events(clean_text)
                     if not events:
                         continue
+
                     data.append({
                         "message_id": message.id,
                         "message_date": message.date,
                         "message_text": clean_text,
                         "channel": channel,
-                        "events": ",".join(sorted(events))
+                        "events": ",".join(sorted(events)),
+                        "region": None,
                     })
                     channel_count += 1
                     if channel_count % 1000 == 0:
-                        log(f"  -> {channel_count} messages collected so far in {channel}")
+                        log(f"  {channel}: {channel_count} messages so far")
+
             except Exception as e:
                 log(f"[!] Error in {channel}: {e}")
 
-            log(f"Finished channel {channel}: {channel_count} messages collected")
+            log(f"Done {channel}: {channel_count} messages")
 
     if not data:
         log("Nothing collected.")
         return
 
+    log(f"Geo-tagging {len(data)} messages in batches...")
+    texts = [row["message_text"] for row in data]
+    regions = extract_regions_batch(texts, batch_size=32)
+    for row, region in zip(data, regions):
+        row["region"] = region
+    log("Geo-tagging done.")
+
     df = pd.DataFrame(data)
     df = df.drop_duplicates(subset=["channel", "message_id"])
     df["message_date"] = pd.to_datetime(df["message_date"], utc=True).dt.tz_convert(None)
-    df = df.sort_values("message_date", ascending=True)
+    df = df.sort_values("message_date")
     os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
     df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
     log(f"Collected {len(df)} posts -> {OUTPUT_FILE}")

@@ -26,25 +26,26 @@ def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     rows = df.to_dict("records")
     merged = []
     cur = rows[0].copy()
+    cur["_open_count"] = 1
     for r in rows[1:]:
         same_group = (
             r["region"] == cur["region"]
             and r["alarm_type"] == cur["alarm_type"]
         )
         open_alarm = pd.isna(cur["alarm_end"])
+        is_phantom = open_alarm and r["alarm_start"] == cur["alarm_start"]
         overlaps = (
             pd.notna(cur["alarm_end"])
             and r["alarm_start"] <= cur["alarm_end"]
         )
-        if same_group and (overlaps or open_alarm):
+        if same_group and (overlaps or is_phantom):
             if pd.notna(r["alarm_end"]):
-                if pd.isna(cur["alarm_end"]):
-                    cur["alarm_end"] = r["alarm_end"]
-                else:
-                    cur["alarm_end"] = max(cur["alarm_end"], r["alarm_end"])
+                cur["alarm_end"] = r["alarm_end"]
         else:
+            cur.pop("_open_count", None)
             merged.append(cur)
             cur = r.copy()
+    cur.pop("_open_count", None)
     merged.append(cur)
     return pd.DataFrame(merged)
 

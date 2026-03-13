@@ -7,6 +7,8 @@ FULL_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_data.csv")
 DAILY_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_daily.csv")
 LOG_FILE = os.path.join(ROOT, "logs", "telegram", "append.log")
 
+COLUMNS = ["message_id", "message_date", "message_text", "channel", "events", "region"]
+
 def log(msg: str):
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -22,13 +24,18 @@ def main():
         log("[!] No daily file found, nothing to append.")
         return
 
-    columns = ["message_id", "message_date", "message_text", "channel", "events"]
-    full = pd.read_csv(FULL_FILE) if os.path.exists(FULL_FILE) else pd.DataFrame(columns=columns)
+    full = pd.read_csv(FULL_FILE)  if os.path.exists(FULL_FILE)  else pd.DataFrame(columns=COLUMNS)
     daily = pd.read_csv(DAILY_FILE)
+
+    if "region" not in full.columns:
+        full["region"] = None
+
     log(f"Full: {len(full):,} rows | Daily: {len(daily):,} rows")
 
     combined = pd.concat([full, daily], ignore_index=True)
-    combined["message_date"] = pd.to_datetime(combined["message_date"], format='ISO8601', utc=True).dt.tz_localize(None)
+    combined["message_date"] = pd.to_datetime(
+        combined["message_date"], format="ISO8601", utc=True
+    ).dt.tz_localize(None)
 
     before = len(combined)
     combined.drop_duplicates(subset=["channel", "message_id"], keep="first", inplace=True)

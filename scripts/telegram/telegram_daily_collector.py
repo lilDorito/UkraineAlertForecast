@@ -14,6 +14,7 @@ LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.text_cleaner import clean_text as clean
 from util.event_detector import detect_events
+from util.geo_tagger import smart_extract
 
 load_dotenv(os.path.join(ROOT, ".env"))
 API_ID = int(os.getenv("TELEGRAM_API_ID"))
@@ -33,7 +34,7 @@ def log(msg: str):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
-def load_existing_ids():
+def load_existing_ids() -> set:
     if os.path.exists(OUTPUT_FILE):
         df = pd.read_csv(OUTPUT_FILE, usecols=["message_id"])
         return set(df["message_id"].tolist())
@@ -62,17 +63,21 @@ async def main():
                         continue
                     if not message.text:
                         continue
+
                     clean_text = clean(message.text)
                     events = detect_events(clean_text)
                     if not events:
                         continue
+
                     data.append({
                         "message_id": message.id,
                         "message_date": message.date,
                         "message_text": clean_text,
                         "channel": channel,
-                        "events": ",".join(sorted(events))
+                        "events": ",".join(sorted(events)),
+                        "region": smart_extract(clean_text),
                     })
+
             except Exception as e:
                 log(f"[!] Error in {channel}: {e}")
 

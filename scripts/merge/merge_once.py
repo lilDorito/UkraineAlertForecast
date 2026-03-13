@@ -17,7 +17,7 @@ PATHS = {
 }
 
 if __name__ == "__main__":
-    date_end = pd.Timestamp.now().floor("h")
+    date_end = pd.Timestamp.now().floor("D") - pd.Timedelta(seconds=1)
 
     print("Building spine...")
     spine = build_spine(DATE_START, date_end)
@@ -39,4 +39,4 @@ if __name__ == "__main__":
     df = merge_sources(spine, weather, alarms, telegram, isw, reddit)
 
     print(f"\nFinal shape: {df.shape}")
-    save_to_csv(df, PATHS["output"])
+    save_to_csv(df, PATHS["output"], alarms_path=PATHS["alarms"])

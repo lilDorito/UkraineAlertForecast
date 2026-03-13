@@ -22,30 +22,39 @@ KEEP = ["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "durati
 def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
+
     df = df.sort_values(["region", "alarm_type", "alarm_start"]).reset_index(drop=True)
     rows = df.to_dict("records")
     merged = []
     cur = rows[0].copy()
-    cur["_open_count"] = 1
+
     for r in rows[1:]:
         same_group = (
             r["region"] == cur["region"]
             and r["alarm_type"] == cur["alarm_type"]
         )
-        open_alarm = pd.isna(cur["alarm_end"])
-        is_phantom = open_alarm and r["alarm_start"] == cur["alarm_start"]
+
+        if not same_group:
+            merged.append(cur)
+            cur = r.copy()
+            continue
+
+        cur_is_open = pd.isna(cur["alarm_end"])
         overlaps = (
             pd.notna(cur["alarm_end"])
             and r["alarm_start"] <= cur["alarm_end"]
         )
-        if same_group and (overlaps or is_phantom):
+
+        if cur_is_open or overlaps:
             if pd.notna(r["alarm_end"]):
-                cur["alarm_end"] = r["alarm_end"]
+                if cur_is_open:
+                    cur["alarm_end"] = r["alarm_end"]
+                else:
+                    cur["alarm_end"] = max(cur["alarm_end"], r["alarm_end"])
         else:
-            cur.pop("_open_count", None)
             merged.append(cur)
             cur = r.copy()
-    cur.pop("_open_count", None)
+
     merged.append(cur)
     return pd.DataFrame(merged)
 
@@ -63,7 +72,6 @@ def main():
     errors = []
 
     for path in files:
-
         try:
             df = pd.read_csv(path, encoding="utf-8", usecols=COLUMNS.keys())
             df = df.rename(columns=COLUMNS)
@@ -78,7 +86,6 @@ def main():
                 errors="coerce"
             )
             dfs.append(df)
-
         except Exception as e:
             errors.append((path, str(e)))
             print(f"[!] Skipped {os.path.basename(path)}: {e}")
@@ -88,13 +95,11 @@ def main():
         return
 
     combined = pd.concat(dfs, ignore_index=True)
-
     print(f"[i] Total rows after concat: {len(combined):,}")
 
     before = len(combined)
     combined = combined[combined["alarm_start"].notna()]
     dropped = before - len(combined)
-
     if dropped:
         print(f"[i] Dropped {dropped:,} rows with missing alarm_start")
 
@@ -102,13 +107,15 @@ def main():
     before = len(combined)
     combined = combined[combined["region"].isin(REGIONS.keys())]
     dropped = before - len(combined)
-
     if dropped:
         print(f"[i] Dropped {dropped:,} rows with unknown regions")
 
+    before = len(combined)
+    combined = combined.drop_duplicates(subset=["region", "alarm_type", "alarm_start", "alarm_end"])
+    print(f"[i] Exact dedup: {before:,} -> {len(combined):,} rows")
+
     combined["_start_5min"] = combined["alarm_start"].dt.floor("5min")
     before = len(combined)
-
     combined = (
         combined
         .groupby(["region", "alarm_type", "_start_5min"], as_index=False)
@@ -118,12 +125,10 @@ def main():
         )
         .drop(columns=["_start_5min"])
     )
-
-    print(f"[i] Pass 1 dedup: {before:,} -> {len(combined):,} rows")
+    print(f"[i] Pass 1 dedup (5min bucket): {before:,} -> {len(combined):,} rows")
 
     before = len(combined)
     combined = merge_overlapping(combined).reset_index(drop=True)
-
     print(f"[i] Pass 2 overlap merge: {before:,} -> {len(combined):,} rows")
 
     combined["duration_min"] = (
@@ -134,26 +139,28 @@ def main():
     bad_mask = combined["duration_min"].notna() & (combined["duration_min"] <= 0)
     bad_count = bad_mask.sum()
     combined = combined[~bad_mask]
-
     if bad_count:
         print(f"[i] Dropped {bad_count:,} rows with zero or negative duration")
 
     combined["region_en"] = combined["region"].map(lambda x: REGIONS[x][2])
-    combined = combined[KEEP].sort_values("alarm_start").reset_index(drop=True)
+
+    combined = combined.sort_values("alarm_start").reset_index(drop=True)
+
+    combined = combined[KEEP]
     combined.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
 
     remaining_nat = combined["alarm_end"].isna().sum()
-
-    print(f"\n[✓] Combined {len(dfs)} files -> {len(combined):,} rows")
-    print(f"[✓] Regions: {combined['region'].nunique()} unique")
-    print(f"[✓] Open-ended alarms: {remaining_nat:,}")
-    print(f"[✓] Date range: {combined['alarm_start'].min()} -> {combined['alarm_start'].max()}")
-    print(f"[✓] Saved to: {OUTPUT_FILE}")
+    print(f"\n[+] Combined {len(dfs)} files -> {len(combined):,} rows")
+    print(f"[+] Regions: {combined['region'].nunique()} unique")
+    print(f"[+] Open-ended alarms: {remaining_nat:,}")
+    print(f"[+] Date range: {combined['alarm_start'].min()} -> {combined['alarm_start'].max()}")
+    print(f"[+] Saved to: {OUTPUT_FILE}")
 
     if errors:
         print(f"\n[!] {len(errors)} files had errors:")
         for path, err in errors:
             print(f"    {os.path.basename(path)}: {err}")
+
 
 if __name__ == "__main__":
     main()

@@ -8,6 +8,7 @@ from merge_utils import (
 PATHS = {
     "weather": "datasets/weather/weather_daily.csv",
     "alarms": "datasets/alarms/alarms_daily.csv",
+    "alarms_full": "datasets/alarms/alarms_data.csv",
     "reddit": "datasets/reddit/reddit_daily.csv",
     "telegram": "datasets/telegram/telegram_daily.csv",
     "isw": "datasets/isw/isw_daily.csv",
@@ -39,4 +40,4 @@ if __name__ == "__main__":
     df = merge_sources(spine, weather, alarms, telegram, isw, reddit)
 
     print(f"Final shape: {df.shape}")
-    save_to_csv(df, PATHS["output"])
+    save_to_csv(df, PATHS["output"], alarms_path=PATHS["alarms_full"])

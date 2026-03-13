@@ -46,11 +46,16 @@ def process_alarms(path: str) -> pd.DataFrame:
     df["alarm_end"] = pd.to_datetime(df["alarm_end"])
     df["region"] = df["region_en"]
     df = df.dropna(subset=["region"])
-
+ 
+    yesterday = pd.Timestamp.now().floor("D") - pd.Timedelta(seconds=1)
+    df["alarm_end"] = df["alarm_end"].fillna(yesterday)
+ 
+    df["duration_min"] = (df["alarm_end"] - df["alarm_start"]).dt.total_seconds() / 60
+ 
     df["hour_start"] = df["alarm_start"].dt.floor("h")
     df["hour_end"] = df["alarm_end"].dt.floor("h")
     df["n_hours"] = ((df["hour_end"] - df["hour_start"]) / pd.Timedelta("1h")).astype(int) + 1
-
+ 
     records = []
     for _, row in tqdm(df.iterrows(), total=len(df), desc="  alarms", unit="alarms"):
         for h in pd.date_range(start=row["hour_start"], periods=row["n_hours"], freq="h"):
@@ -62,7 +67,7 @@ def process_alarms(path: str) -> pd.DataFrame:
                 "alarm_active": 1,
                 "duration_min": row["duration_min"],
             })
-
+ 
     return pd.DataFrame(records).groupby(["timestamp_hour", "region"]).agg(
         alarms_started=("alarm_started", "sum"),
         alarms_ended=("alarm_ended", "sum"),
@@ -91,51 +96,65 @@ def process_reddit(path: str) -> pd.DataFrame:
 
     return df.groupby("timestamp_hour").agg(**agg_dict).reset_index()
 
-def process_telegram(path: str) -> pd.DataFrame:
+def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
+    print("  [telegram] reading file...")
     df = pd.read_csv(path)
     df["timestamp_hour"] = (
         pd.to_datetime(df["message_date"], utc=True)
         .dt.tz_convert(None)
         .dt.floor("h")
     )
-
+ 
     tagged = df[df["region"].notna()].copy()
     tagged["tg_untagged"] = 0
-
-    untagged = df[df["region"].isna()].drop(columns="region")
-    untagged = untagged.loc[untagged.index.repeat(len(REGION_IDS))].reset_index(drop=True)
-    untagged["region"] = REGION_IDS * (len(untagged) // len(REGION_IDS))
-    untagged["tg_untagged"] = 1
-
-    df = pd.concat([tagged, untagged], ignore_index=True)
-
+ 
+    untagged = df[df["region"].isna()].drop(columns="region").reset_index(drop=True)
+ 
+    print(f"  [telegram] {len(tagged):,} tagged | {len(untagged):,} untagged messages")
+ 
+    untagged_chunks = []
+    n_chunks = (len(untagged) + chunk_size - 1) // chunk_size
+ 
+    for i in tqdm(range(n_chunks), desc="  [telegram] expanding untagged", unit="chunk"):
+        chunk = untagged.iloc[i * chunk_size:(i + 1) * chunk_size]
+        expanded = chunk.loc[chunk.index.repeat(len(REGION_IDS))].reset_index(drop=True)
+        expanded["region"] = REGION_IDS * len(chunk)
+        expanded["tg_untagged"] = 1
+        untagged_chunks.append(expanded)
+ 
+    print("  [telegram] concatenating...")
+    df = pd.concat([tagged] + untagged_chunks, ignore_index=True)
+ 
+    print("  [telegram] computing event dummies...")
     event_dummies = df["events"].str.get_dummies(sep=",").add_prefix("tg_event_")
     df = pd.concat([df, event_dummies], axis=1)
     event_cols = list(event_dummies.columns)
-
+ 
     agg_dict = {
         "tg_message_count": ("message_id", "count"),
         "tg_untagged_count": ("tg_untagged", "sum"),
     }
     for col in event_cols:
         agg_dict[col] = (col, "sum")
-
-    return df.groupby(["timestamp_hour", "region"]).agg(**agg_dict).reset_index()
+ 
+    print("  [telegram] aggregating...")
+    result = df.groupby(["timestamp_hour", "region"]).agg(**agg_dict).reset_index()
+    print(f"  [telegram] done -> {len(result):,} rows")
+    return result
 
 def process_isw(path: str) -> pd.DataFrame:
     df = pd.read_csv(path, sep=";")
     df["date"] = pd.to_datetime(df["date"])
 
-    df = df.loc[df.index.repeat(24)].reset_index(drop=True)
-    df["h"] = df.groupby(level=0).cumcount()
-    df["timestamp_hour"] = df["date"] + pd.to_timedelta(df["h"], unit="h")
-    df = df.drop(columns=["h"])
+    rows = []
+    for _, row in df.iterrows():
+        for h in range(24):
+            rows.append({
+                "timestamp_hour": row["date"] + pd.Timedelta(hours=h),
+                "toplines": row["toplines"],
+            })
 
-    regions_df = pd.DataFrame({"region": REGION_IDS, "_key": 1})
-    df["_key"] = 1
-    df = df.merge(regions_df, on="_key").drop(columns="_key")
-
-    return df[["timestamp_hour", "region", "toplines"]]
+    return pd.DataFrame(rows)
 
 # Merge
 
@@ -152,11 +171,11 @@ def merge_sources(
         ("weather",  weather,  ["timestamp_hour", "region"]),
         ("alarms",   alarms,   ["timestamp_hour", "region"]),
         ("telegram", telegram, ["timestamp_hour", "region"]),
-        ("isw",      isw,      ["timestamp_hour", "region"]),
+        ("isw",      isw,      ["timestamp_hour"]),
         ("reddit",   reddit,   ["timestamp_hour"]),
     ]:
         df = df.merge(source, on=keys, how="left")
-        print(f"  ✓ {name:<10} {df.shape}")
+        print(f"  > {name:<10} {df.shape}")
 
     num_cols = df.select_dtypes(include=[np.number]).columns
     df[num_cols] = df[num_cols].fillna(0)
@@ -164,7 +183,7 @@ def merge_sources(
 
 # Save / append
 
-def save_to_csv(df: pd.DataFrame, path: str):
+def save_to_csv(df: pd.DataFrame, path: str, alarms_path: str = None):
     df["timestamp_hour"] = df["timestamp_hour"].astype(str)
     output = Path(path)
 
@@ -175,6 +194,17 @@ def save_to_csv(df: pd.DataFrame, path: str):
         return
 
     existing = pd.read_csv(output)
+
+    if alarms_path:
+        alarm_cols = [c for c in existing.columns if c.startswith("alarm")]
+        existing = existing.drop(columns=alarm_cols, errors="ignore")
+        fresh_alarms = process_alarms(alarms_path)
+        fresh_alarms["timestamp_hour"] = fresh_alarms["timestamp_hour"].astype(str)
+        existing = existing.merge(fresh_alarms, on=["timestamp_hour", "region"], how="left")
+        alarm_num_cols = [c for c in fresh_alarms.columns if c not in ["timestamp_hour", "region"]]
+        existing[alarm_num_cols] = existing[alarm_num_cols].fillna(0)
+        print(f"  Alarms reprocessed from scratch")
+
     existing["_key"] = existing["timestamp_hour"] + "|" + existing["region"].astype(str)
     df["_key"] = df["timestamp_hour"] + "|" + df["region"].astype(str)
     new_rows = df[~df["_key"].isin(existing["_key"])].drop(columns="_key")
@@ -182,6 +212,8 @@ def save_to_csv(df: pd.DataFrame, path: str):
 
     if not len(new_rows):
         print("No new rows - already up to date.")
+        existing.sort_values(["timestamp_hour", "region"], inplace=True)
+        existing.to_csv(output, index=False)
         return
 
     combined = pd.concat([existing, new_rows], ignore_index=True)

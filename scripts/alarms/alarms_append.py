@@ -11,6 +11,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from datetime import datetime
 
+KEEP = ["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "duration_min"]
+
 def log(msg: str):
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -19,32 +21,41 @@ def log(msg: str):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
-def append_overlapping(df: pd.DataFrame) -> pd.DataFrame:
+def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
     df = df.sort_values(["region", "alarm_type", "alarm_start"]).reset_index(drop=True)
     rows = df.to_dict("records")
     merged = []
     cur = rows[0].copy()
+
     for r in rows[1:]:
         same_group = (
             r["region"] == cur["region"]
             and r["alarm_type"] == cur["alarm_type"]
         )
-        open_alarm = pd.isna(cur["alarm_end"])
+
+        if not same_group:
+            merged.append(cur)
+            cur = r.copy()
+            continue
+
+        cur_is_open = pd.isna(cur["alarm_end"])
         overlaps = (
             pd.notna(cur["alarm_end"])
             and r["alarm_start"] <= cur["alarm_end"]
         )
-        if same_group and (overlaps or open_alarm):
+
+        if cur_is_open or overlaps:
             if pd.notna(r["alarm_end"]):
-                if pd.isna(cur["alarm_end"]):
+                if cur_is_open:
                     cur["alarm_end"] = r["alarm_end"]
                 else:
                     cur["alarm_end"] = max(cur["alarm_end"], r["alarm_end"])
         else:
             merged.append(cur)
             cur = r.copy()
+
     merged.append(cur)
     return pd.DataFrame(merged)
 
@@ -55,13 +66,14 @@ def main():
         log("[!] No daily file found, nothing to append.")
         return
 
-    full = pd.read_csv(FULL_FILE)
-    daily = pd.read_csv(DAILY_FILE)
+    full = pd.read_csv(FULL_FILE, encoding="utf-8-sig")
+    daily = pd.read_csv(DAILY_FILE, encoding="utf-8-sig")
     log(f"Full: {len(full):,} rows | Daily: {len(daily):,} rows")
 
-    for df in [full, daily]:
-        df["alarm_start"] = pd.to_datetime(df["alarm_start"], format="ISO8601")
-        df["alarm_end"] = pd.to_datetime(df["alarm_end"], format="ISO8601")
+    full["alarm_start"] = pd.to_datetime(full["alarm_start"], format="ISO8601")
+    full["alarm_end"] = pd.to_datetime(full["alarm_end"], format="ISO8601")
+    daily["alarm_start"] = pd.to_datetime(daily["alarm_start"], format="ISO8601")
+    daily["alarm_end"] = pd.to_datetime(daily["alarm_end"], format="ISO8601")
 
     combined = pd.concat([full, daily], ignore_index=True)
 
@@ -71,30 +83,33 @@ def main():
         combined
         .groupby(["region", "alarm_type", "_start_5min"], as_index=False)
         .agg(
-            alarm_start = ("alarm_start", "min"),
-            alarm_end = ("alarm_end",   "max"),
-            region_en = ("region_en",   "first"),
+            alarm_start=("alarm_start", "min"),
+            alarm_end=("alarm_end", "max"),
+            region_en=("region_en", "first"),
         )
         .drop(columns=["_start_5min"])
     )
     log(f"Pass 1 dedup: {before:,} -> {len(combined):,} rows")
 
     before = len(combined)
-    combined = append_overlapping(combined).reset_index(drop=True)
-    log(f"Pass 2 dedup: {before:,} -> {len(combined):,} rows")
+    combined = merge_overlapping(combined).reset_index(drop=True)
+    log(f"Pass 2 overlap merge: {before:,} -> {len(combined):,} rows")
 
     combined["duration_min"] = (
         (combined["alarm_end"] - combined["alarm_start"]).dt.total_seconds() / 60
     )
 
     bad_mask = combined["duration_min"].notna() & (combined["duration_min"] <= 0)
+    bad_count = bad_mask.sum()
     combined = combined[~bad_mask]
+    if bad_count:
+        log(f"Dropped {bad_count:,} rows with zero or negative duration")
 
-    combined = combined[["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "duration_min"]]
-    combined.sort_values("alarm_start", inplace=True)
+    combined = combined[KEEP].sort_values("alarm_start").reset_index(drop=True)
     combined.to_csv(FULL_FILE, index=False, encoding="utf-8-sig")
     log(f"Saved {len(combined):,} rows -> {FULL_FILE}")
     log("Done.\n")
+
 
 if __name__ == "__main__":
     main()

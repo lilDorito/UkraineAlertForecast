@@ -59,6 +59,7 @@ ALARM_TYPE_MAP = {
 
 KEEP = ["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "duration_min"]
 
+
 def log(msg: str):
     os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -66,6 +67,7 @@ def log(msg: str):
     print(line)
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(line + "\n")
+
 
 def fetch_oblast(uid: int, retries: int = 3) -> list:
     url = BASE_URL.format(uid=uid)
@@ -83,10 +85,12 @@ def fetch_oblast(uid: int, retries: int = 3) -> list:
             time.sleep(10)
     return []
 
+
 def parse_dt(value: str | None) -> pd.Timestamp:
     if not value:
         return pd.NaT
     return pd.to_datetime(value, utc=True).tz_convert(None)
+
 
 def parse_alert(alert: dict, region: str, since_dt: datetime, until_dt: datetime) -> dict | None:
     try:
@@ -112,7 +116,7 @@ def parse_alert(alert: dict, region: str, since_dt: datetime, until_dt: datetime
             log(f"  [!] Unknown region after fix: '{region_norm}' (original: '{region}')")
             return None
 
-        raw_type   = alert.get("alert_type", "").lower()
+        raw_type = alert.get("alert_type", "").lower()
         alarm_type = ALARM_TYPE_MAP.get(raw_type)
         if alarm_type is None:
             log(f"  [!] Unknown alarm_type: '{raw_type}' - skipping")
@@ -131,6 +135,7 @@ def parse_alert(alert: dict, region: str, since_dt: datetime, until_dt: datetime
         log(f"  [!] Failed to parse alert: {e} | raw: {alert}")
         return None
 
+
 def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:
         return df
@@ -138,27 +143,38 @@ def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     rows = df.to_dict("records")
     merged = []
     cur = rows[0].copy()
+
     for r in rows[1:]:
         same_group = (
             r["region"] == cur["region"]
             and r["alarm_type"] == cur["alarm_type"]
         )
-        open_alarm = pd.isna(cur["alarm_end"])
+
+        if not same_group:
+            merged.append(cur)
+            cur = r.copy()
+            continue
+
+        cur_is_open = pd.isna(cur["alarm_end"])
         overlaps = (
             pd.notna(cur["alarm_end"])
             and r["alarm_start"] <= cur["alarm_end"]
         )
-        if same_group and (overlaps or open_alarm):
+
+        if cur_is_open or overlaps:
             if pd.notna(r["alarm_end"]):
-                if pd.isna(cur["alarm_end"]):
+                if cur_is_open:
                     cur["alarm_end"] = r["alarm_end"]
                 else:
                     cur["alarm_end"] = max(cur["alarm_end"], r["alarm_end"])
+
         else:
             merged.append(cur)
             cur = r.copy()
+
     merged.append(cur)
     return pd.DataFrame(merged)
+
 
 def main():
     log("> Alarms daily collector starting (alerts.in.ua) <")
@@ -188,16 +204,19 @@ def main():
         if i < n:
             time.sleep(REQUEST_DELAY)
 
-    COMBINED_FILE = os.path.join(ROOT, "datasets", "alarms", "alarms_combined.csv")
-    PERMANENT_REGIONS = {"Луганська область", "Автономна Республіка Крим"}
+    COMBINED_FILE = os.path.join(ROOT, "datasets", "alarms", "alarms_data.csv")
 
     if os.path.exists(COMBINED_FILE):
         try:
             hist = pd.read_csv(COMBINED_FILE, encoding="utf-8-sig")
             hist["alarm_start"] = pd.to_datetime(hist["alarm_start"])
             hist["alarm_end"] = pd.to_datetime(hist["alarm_end"])
+
             present_regions = {r["region"] for r in rows} if rows else set()
-            for region in PERMANENT_REGIONS - present_regions:
+
+            open_regions = set(hist[hist["alarm_end"].isna()]["region"].unique())
+
+            for region in open_regions - present_regions:
                 passthrough = (
                     hist[(hist["region"] == region) & hist["alarm_end"].isna()]
                     .sort_values("alarm_start")
@@ -213,6 +232,7 @@ def main():
                         "duration_min": row["duration_min"],
                     })
                     log(f"  [passthrough] {region} - carried forward open alarm from {row['alarm_start']}")
+
         except Exception as e:
             log(f"  [!] Failed to load passthrough from combined dataset: {e}")
 
@@ -221,18 +241,16 @@ def main():
         return
 
     df = pd.DataFrame(rows)[KEEP]
-
     df["alarm_start"] = pd.to_datetime(df["alarm_start"])
     df["alarm_end"] = pd.to_datetime(df["alarm_end"])
-    df["_start_5min"] = df["alarm_start"].dt.floor("5min")
 
+    df["_start_5min"] = df["alarm_start"].dt.floor("5min")
     df = (
         df.groupby(["region", "alarm_type", "_start_5min"], as_index=False)
         .agg(
-            alarm_start  = ("alarm_start", "min"),
-            alarm_end = ("alarm_end", "max"),
-            region_en = ("region_en", "first"),
-            duration_min = ("duration_min","max"),
+            alarm_start=("alarm_start", "min"),
+            alarm_end=("alarm_end", "max"),
+            region_en=("region_en", "first"),
         )
         .drop(columns=["_start_5min"])
     )
@@ -240,7 +258,10 @@ def main():
     region_en_map = df.set_index("region")["region_en"].to_dict()
     df = merge_overlapping(df).reset_index(drop=True)
     df["region_en"] = df["region"].map(region_en_map)
-    df["duration_min"] = (df["alarm_end"] - df["alarm_start"]).dt.total_seconds() / 60
+
+    df["duration_min"] = (
+        (df["alarm_end"] - df["alarm_start"]).dt.total_seconds() / 60
+    )
 
     df = df[KEEP].sort_values("alarm_start").reset_index(drop=True)
     log(f"  Deduplicated to {len(df)} unique alarm events")
@@ -248,6 +269,7 @@ def main():
     df.to_csv(OUTPUT_FILE, mode="w", index=False, header=True, encoding="utf-8-sig")
     log(f"[+] Wrote {len(df)} rows -> {OUTPUT_FILE}")
     log("Done.\n")
+
 
 if __name__ == "__main__":
     main()

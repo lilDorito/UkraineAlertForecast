@@ -16,7 +16,7 @@ PATHS = {
 }
 
 if __name__ == "__main__":
-    yesterday = pd.Timestamp.now().floor("D") - pd.Timedelta(days=1)
+    yesterday = pd.Timestamp.now("UTC").tz_localize(None).floor("D") - pd.Timedelta(days=1)
     date_end = yesterday + pd.Timedelta(hours=23)
 
     print(f"Daily merge for {yesterday.date()}")

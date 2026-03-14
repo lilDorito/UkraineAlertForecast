@@ -43,9 +43,15 @@ def load_existing_ids() -> set:
 async def main():
     log("> Telegram daily collector starting <")
 
+    TARGET_DATE = None # insert for backfill date like "2026-03-12"
+
     today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    since_date = today - timedelta(days=1)
-    until_date = today
+    if TARGET_DATE:
+        since_date = datetime.strptime(TARGET_DATE, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+    else:
+        since_date = today - timedelta(days=1)
+    until_date = since_date + timedelta(days=1)
+
     log(f"Window: {since_date.date()} 00:00 UTC -> {until_date.date()} 00:00 UTC")
 
     existing_ids = load_existing_ids()

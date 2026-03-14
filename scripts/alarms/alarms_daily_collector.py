@@ -5,6 +5,9 @@ import os
 import sys
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
+
+KYIV = ZoneInfo("Europe/Kyiv")
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "alarms", "alarms_daily.csv")
@@ -86,7 +89,7 @@ def fetch_oblast(uid: int, retries: int = 3) -> list:
 def parse_dt(value: str | None) -> pd.Timestamp:
     if not value:
         return pd.NaT
-    return pd.to_datetime(value, utc=True).tz_convert(None)
+    return pd.to_datetime(value, utc=True).tz_convert("Europe/Kyiv").tz_localize(None)
 
 def parse_alert(alert: dict, region: str, since_dt: datetime, until_dt: datetime) -> dict | None:
     try:
@@ -177,9 +180,9 @@ def main():
         log("[!] ALERTS_IN_UA_API_KEY not set in .env")
         return
 
-    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    since_dt = (today - timedelta(days=1)).replace(tzinfo=None)
-    until_dt = today.replace(tzinfo=None)
+    today = datetime.now(KYIV).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+    since_dt = today - timedelta(days=1)
+    until_dt = today 
     log(f"Window: {since_dt} -> {until_dt}")
 
     rows = []

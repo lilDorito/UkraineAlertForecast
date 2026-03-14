@@ -41,8 +41,8 @@ def process_weather(path: str) -> pd.DataFrame:
 
 def process_alarms(path: str, date_filter: pd.Timestamp = None) -> pd.DataFrame:
     df = pd.read_csv(path)
-    df["alarm_start"] = pd.to_datetime(df["alarm_start"])
-    df["alarm_end"] = pd.to_datetime(df["alarm_end"])
+    df["alarm_start"] = pd.to_datetime(df["alarm_start"], format="ISO8601")
+    df["alarm_end"] = pd.to_datetime(df["alarm_end"], format="ISO8601")
     df["region"] = df["region_en"]
     df = df.dropna(subset=["region"])
 

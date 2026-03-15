@@ -42,10 +42,10 @@ def process_weather(path: str) -> pd.DataFrame:
 def process_alarms(path: str, date_filter: pd.Timestamp = None) -> pd.DataFrame:
     df = pd.read_csv(path)
 
-    df["alarm_start"] = (pd.to_datetime(df["alarm_start"], format="ISO8601")
-                     + pd.Timedelta(hours=-2))
-    df["alarm_end"]   = (pd.to_datetime(df["alarm_end"], format="ISO8601")
-                     + pd.Timedelta(hours=-2))
+    for col in ["alarm_start", "alarm_end"]:
+        df[col] = pd.to_datetime(df[col], errors="coerce", utc=True) \
+            .dt.tz_convert("Europe/Kyiv") \
+            .dt.tz_localize(None)
 
     df["region"] = df["region_en"]
     df = df.dropna(subset=["region"])
@@ -55,45 +55,41 @@ def process_alarms(path: str, date_filter: pd.Timestamp = None) -> pd.DataFrame:
     df["hour_start"] = df["alarm_start"].dt.floor("h")
     df["hour_end"] = df["alarm_end"].dt.floor("h")
 
-    now_hour = pd.Timestamp.now("UTC").tz_localize(None).floor("h")
-
     open_mask = df["alarm_end"].isna()
     closed = df[~open_mask].copy()
     open_ = df[open_mask].copy()
 
-    closed["n_hours"] = ((closed["hour_end"] - closed["hour_start"]) / pd.Timedelta("1h")).astype(int) + 1
+    closed = closed[closed["hour_start"].notna() & closed["hour_end"].notna()]
+    closed["n_hours"] = ((closed["hour_end"] - closed["hour_start"]) / pd.Timedelta("1h")).astype("Int64") + 1
 
-    records = []
+    closed = closed.loc[closed.index.repeat(closed["n_hours"])].copy()
+    closed["timestamp_hour"] = closed.groupby(level=0).cumcount().apply(lambda x: pd.Timedelta(hours=x)) + closed["hour_start"]
+    closed["alarm_started"] = (closed["timestamp_hour"] == closed["hour_start"]).astype(int)
+    closed["alarm_ended"] = (closed["timestamp_hour"] == closed["hour_end"]).astype(int)
+    closed["alarm_active"] = 1
 
-    for _, row in tqdm(closed.iterrows(), total=len(closed), desc="  alarms (closed)", unit="alarms"):
-        for h in pd.date_range(start=row["hour_start"], periods=row["n_hours"], freq="h"):
-            records.append({
-                "timestamp_hour": h,
-                "region": row["region"],
-                "alarm_started": int(h == row["hour_start"]),
-                "alarm_ended": int(h == row["hour_end"]),
-                "alarm_active": 1,
-                "duration_min": row["duration_min"],
-            })
+    if not open_.empty:
+        max_hour_in_dataset = pd.concat([closed["hour_end"], open_["hour_start"]]).max()
+        open_ = open_[open_["hour_start"].notna()].copy()
+        open_["n_hours"] = ((max_hour_in_dataset - open_["hour_start"]) / pd.Timedelta("1h")).astype("Int64") + 1
 
-    for _, row in tqdm(open_.iterrows(), total=len(open_), desc="  alarms (open)", unit="alarms"):
-        n_hours = int((now_hour - row["hour_start"]) / pd.Timedelta("1h")) + 1
-        for h in pd.date_range(start=row["hour_start"], periods=n_hours, freq="h"):
-            records.append({
-                "timestamp_hour": h,
-                "region": row["region"],
-                "alarm_started": int(h == row["hour_start"]),
-                "alarm_ended": 0,
-                "alarm_active": 1,
-                "duration_min": None,
-            })
+        open_ = open_.loc[open_.index.repeat(open_["n_hours"])].copy()
+        open_["timestamp_hour"] = open_.groupby(level=0).cumcount().apply(lambda x: pd.Timedelta(hours=x)) + open_["hour_start"]
+        open_["alarm_started"] = (open_["timestamp_hour"] == open_["hour_start"]).astype(int)
+        open_["alarm_ended"] = 0
+        open_["alarm_active"] = 1
+        open_["duration_min"] = None
 
-    return pd.DataFrame(records).groupby(["timestamp_hour", "region"]).agg(
+    all_alarms = pd.concat([closed, open_], ignore_index=True, sort=False)
+
+    result = all_alarms.groupby(["timestamp_hour", "region"]).agg(
         alarms_started=("alarm_started", "sum"),
         alarms_ended=("alarm_ended", "sum"),
         alarms_active=("alarm_active", "sum"),
         alarm_duration_min_sum=("duration_min", "sum"),
     ).reset_index()
+
+    return result
 
 def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
     print("  [telegram] reading file...")

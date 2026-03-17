@@ -30,6 +30,33 @@ REGIONS = {
     "м. Київ":                        (50.4501, 30.5234, "Kyiv City"),
 }
 
+NEIGHBORS = {
+    "Vinnytsia":       ["Zhytomyr","Kyiv Oblast","Cherkasy","Kirovohrad","Odesa","Khmelnytskyi"],
+    "Volyn":           ["Lviv","Rivne","Zhytomyr"],
+    "Dnipropetrovsk":  ["Kirovohrad","Poltava","Kharkiv","Donetsk","Zaporizhzhia","Kherson","Mykolaiv"],
+    "Donetsk":         ["Kharkiv","Zaporizhzhia","Dnipropetrovsk"],
+    "Zhytomyr":        ["Volyn","Rivne","Kyiv Oblast","Vinnytsia","Khmelnytskyi","Chernihiv"],
+    "Zakarpattia":     ["Lviv","Ivano-Frankivsk"],
+    "Zaporizhzhia":    ["Dnipropetrovsk","Donetsk","Kherson"],
+    "Ivano-Frankivsk": ["Lviv","Ternopil","Chernivtsi","Zakarpattia"],
+    "Kyiv Oblast":     ["Chernihiv","Poltava","Cherkasy","Vinnytsia","Zhytomyr","Kyiv City"],
+    "Kyiv City":       ["Kyiv Oblast"],
+    "Kirovohrad":      ["Cherkasy","Poltava","Dnipropetrovsk","Mykolaiv","Odesa","Vinnytsia"],
+    "Lviv":            ["Volyn","Rivne","Ternopil","Ivano-Frankivsk","Zakarpattia"],
+    "Mykolaiv":        ["Odesa","Kherson","Dnipropetrovsk","Kirovohrad"],
+    "Odesa":           ["Mykolaiv","Kirovohrad","Vinnytsia"],
+    "Poltava":         ["Sumy","Kharkiv","Dnipropetrovsk","Kirovohrad","Cherkasy","Kyiv Oblast"],
+    "Rivne":           ["Volyn","Lviv","Ternopil","Khmelnytskyi","Zhytomyr"],
+    "Sumy":            ["Chernihiv","Poltava","Kharkiv"],
+    "Ternopil":        ["Lviv","Rivne","Khmelnytskyi","Ivano-Frankivsk","Chernivtsi"],
+    "Kharkiv":         ["Sumy","Donetsk","Dnipropetrovsk","Poltava"],
+    "Kherson":         ["Mykolaiv","Dnipropetrovsk","Zaporizhzhia"],
+    "Khmelnytskyi":    ["Zhytomyr","Rivne","Ternopil","Chernivtsi","Vinnytsia"],
+    "Cherkasy":        ["Kyiv Oblast","Poltava","Kirovohrad","Vinnytsia"],
+    "Chernivtsi":      ["Ivano-Frankivsk","Ternopil","Khmelnytskyi"],
+    "Chernihiv":       ["Kyiv Oblast","Sumy","Zhytomyr"]
+}
+
 REGION_NAMES = list(REGIONS.keys())
 
 REGION_RECORDS = [
@@ -39,7 +66,13 @@ REGION_RECORDS = [
 
 UA_TO_EN = {ua: en for ua, (_, _, en) in REGIONS.items()}
 
+REGION_LIST = sorted(UA_TO_EN.values())
+EN_TO_ID = {en: i for i, en in enumerate(REGION_LIST)}
+ID_TO_EN = {i: en for en, i in EN_TO_ID.items()}
+
 REGION_IDS = list(UA_TO_EN.values())
+
+EN_TO_COORDS = {en.replace(" ", "_"): (lat, lon) for ua, (lat, lon, en) in REGIONS.items()}
 
 if __name__ == "__main__":
     import pandas as pd

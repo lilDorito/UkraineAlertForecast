@@ -15,9 +15,9 @@ MODELS = os.path.join(ROOT, "models")
 LOG = os.path.join(ROOT, "logs", "train", "train.log")
 os.makedirs(MODELS, exist_ok=True); os.makedirs(os.path.dirname(LOG), exist_ok=True)
 
-def log(msg):
-    line = f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {msg}"
-    print(line)
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
 
 log("Training starting...")
 df = pd.read_csv(os.path.join(ROOT, "datasets", "features.csv"))

@@ -10,20 +10,18 @@ PLOTS = os.path.join(ROOT, "plots")
 FEATURES = os.path.join(ROOT, "datasets", "features.csv")
 os.makedirs(PLOTS, exist_ok=True)
 
-model = joblib.load(os.path.join(MODELS, "lgb_multioutput.pkl"))
+model = joblib.load(os.path.join(MODELS, "randf_multioutput.pkl"))
 
 df = pd.read_csv(FEATURES, nrows=1)
 df = df.copy()
 
 df['region_encoded'] = df['region_id'].astype('category').cat.codes
-feature_names = model.estimators_[0].feature_name_
+drop_cols = [c for c in df.columns if 'target_' in c] + ['timestamp_hour', 'region_id']
+feature_names = [c for c in df.drop(columns=drop_cols).columns]
 
 importances = np.array([est.feature_importances_ for est in model.estimators_])
 mean_imp = importances.mean(axis=0)
-std_imp = importances.std(axis=0)
-
-std_imp = std_imp / mean_imp.sum()
-mean_imp = mean_imp / mean_imp.sum()
+std_imp  = importances.std(axis=0)
 
 importance_df = pd.DataFrame({
     'feature': feature_names,
@@ -35,9 +33,9 @@ print(f"[i] Top 20 features:\n{importance_df.head(20).to_string(index=False)}")
 
 top = importance_df.head(30)
 fig, ax = plt.subplots(figsize=(10, 8))
-ax.barh(top['feature'][::-1], top['importance'][::-1], xerr=top['std'][::-1], color='steelblue', ecolor='gray', capsize=3)
-ax.set_title("LightGBM feature importance (mean across 24 targets)")
+ax.barh(top['feature'][::-1], top['importance'][::-1], xerr=top['std'][::-1], color='purple', ecolor='gray', capsize=3)
+ax.set_title("Random Forest feature importance (mean across 24 targets)")
 ax.set_xlabel("Importance")
 plt.tight_layout()
-plt.savefig(os.path.join(PLOTS, "feature_importance_lgb.png"), dpi=150)
-print("\n[+] Saved -> plots/feature_importance_lgb.png")
+plt.savefig(os.path.join(PLOTS, "feature_importance_randf.png"), dpi=150)
+print("\n[+] Saved -> plots/feature_importance_randf.png")

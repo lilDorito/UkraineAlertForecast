@@ -1,7 +1,7 @@
 import os, warnings
 import numpy as np
 import pandas as pd
-import lightgbm as lgb
+import xgboost as xgb
 import joblib
 from datetime import datetime
 from sklearn.multioutput import MultiOutputClassifier
@@ -12,7 +12,7 @@ warnings.filterwarnings('ignore')
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 MODELS = os.path.join(ROOT, "models")
-LOG = os.path.join(ROOT, "logs", "train", "train_lgb.log")
+LOG = os.path.join(ROOT, "logs", "train", "train_xgb.log")
 os.makedirs(MODELS, exist_ok=True); os.makedirs(os.path.dirname(LOG), exist_ok=True)
 
 def log(msg):
@@ -45,20 +45,25 @@ X_tr, y_tr = X[~holdout_mask], y[~holdout_mask]
 X_ho, y_ho = X[holdout_mask], y[holdout_mask]
 log(f"Train: {len(X_tr):,} | Holdout: {len(X_ho):,}")
 
+neg, pos = (y_tr.values == 0).sum(), (y_tr.values == 1).sum()
+scale_pos_weight = neg / pos if pos > 0 else 1.0
+
 PARAMS = dict(
-    n_estimators=796,
-    learning_rate=0.013,
-    max_depth=10,
-    num_leaves=82,
-    subsample=0.9,
-    colsample_bytree=0.534,
-    min_child_samples=41,
-    reg_alpha=0.0035,
-    reg_lambda=0.0043,
-    class_weight="balanced",
+    n_estimators=570,
+    learning_rate=0.014034898081088789,
+    max_depth=7,
+    subsample=0.7053610271973639,
+    colsample_bytree=0.5300126362043291,
+    min_child_weight=18,
+    reg_alpha=6.254752700168715,
+    reg_lambda=1.9943958617724464,
+    gamma=3.1612646396910757,
+    scale_pos_weight=scale_pos_weight,
+    eval_metric="logloss",
+    use_label_encoder=False,
     random_state=42,
     n_jobs=-1,
-    verbosity=-1,
+    verbosity=0,
 )
 
 N_TARGETS = len(target_hours)
@@ -67,18 +72,16 @@ N_TREES = PARAMS['n_estimators']
 def fit_with_progress(X, y, label):
     pbar = tqdm(total=N_TREES * N_TARGETS, unit="tree", desc=label)
 
-    def _callback(env):
-        pbar.update(1)
-
     estimators = []
     for i in range(N_TARGETS):
-        clf = lgb.LGBMClassifier(**PARAMS)
-        clf.fit(X, y.iloc[:, i], callbacks=[_callback])
+        clf = xgb.XGBClassifier(**PARAMS)
+        clf.fit(X, y.iloc[:, i])
+        pbar.update(N_TREES)
         estimators.append(clf)
 
     pbar.close()
 
-    model = MultiOutputClassifier(lgb.LGBMClassifier(**PARAMS), n_jobs=1)
+    model = MultiOutputClassifier(xgb.XGBClassifier(**PARAMS), n_jobs=1)
     model.estimators_ = estimators
     model.classes_ = [clf.classes_ for clf in estimators]
     return model
@@ -100,5 +103,5 @@ log(f"F1={np.mean(f1s):.3f} | Prec={np.mean(precs):.3f} | Rec={np.mean(recs):.3f
 print()
 final_model = fit_with_progress(X, y, "Final model")
 
-joblib.dump(final_model, os.path.join(MODELS, "lgb_multioutput.pkl"))
+joblib.dump(final_model, os.path.join(MODELS, "xgb_multioutput.pkl"))
 log("Model saved. Done.")

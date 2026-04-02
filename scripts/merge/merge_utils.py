@@ -4,11 +4,16 @@ from pathlib import Path
 from tqdm import tqdm
 import sys
 import os
+import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import REGION_FIXES, UA_TO_EN, REGION_IDS
 
 # Helpers
+
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
 
 def ua_to_region(ua_name: str) -> str | None:
     ua_name = REGION_FIXES.get(ua_name, ua_name)
@@ -134,7 +139,7 @@ def process_alarms(path: str, date_end: pd.Timestamp = None) -> pd.DataFrame:
     return result
 
 def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
-    print("  [telegram] reading file...")
+    log("  [telegram] reading file...")
     df = pd.read_csv(path)
     df["timestamp_hour"] = (
         pd.to_datetime(df["message_date"], utc=True)
@@ -147,7 +152,7 @@ def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
  
     untagged = df[df["region"].isna()].drop(columns="region").reset_index(drop=True)
  
-    print(f"  [telegram] {len(tagged):,} tagged | {len(untagged):,} untagged messages")
+    log(f"  [telegram] {len(tagged):,} tagged | {len(untagged):,} untagged messages")
  
     untagged_chunks = []
     n_chunks = (len(untagged) + chunk_size - 1) // chunk_size
@@ -159,10 +164,10 @@ def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
         expanded["tg_untagged"] = 1
         untagged_chunks.append(expanded)
  
-    print("  [telegram] concatenating...")
+    log("  [telegram] concatenating...")
     df = pd.concat([tagged] + untagged_chunks, ignore_index=True)
  
-    print("  [telegram] computing event dummies...")
+    log("  [telegram] computing event dummies...")
     event_dummies = df["events"].str.get_dummies(sep=",").add_prefix("tg_event_")
     df = pd.concat([df, event_dummies], axis=1)
     event_cols = list(event_dummies.columns)
@@ -174,9 +179,9 @@ def process_telegram(path: str, chunk_size: int = 10_000) -> pd.DataFrame:
     for col in event_cols:
         agg_dict[col] = (col, "sum")
  
-    print("  [telegram] aggregating...")
+    log("  [telegram] aggregating...")
     result = df.groupby(["timestamp_hour", "region"]).agg(**agg_dict).reset_index()
-    print(f"  [telegram] done -> {len(result):,} rows")
+    log(f"  [telegram] done -> {len(result):,} rows")
     return result
 
 def process_reddit(path: str) -> pd.DataFrame:
@@ -233,7 +238,7 @@ def merge_sources(
         ("reddit", reddit, ["timestamp_hour"]),
     ]:
         df = df.merge(source, on=keys, how="left")
-        print(f"  > {name:<10} {df.shape}")
+        log(f"  > {name:<10} {df.shape}")
 
     num_cols = df.select_dtypes(include=[np.number]).columns
     df[num_cols] = df[num_cols].fillna(0)
@@ -259,7 +264,7 @@ def save_to_csv(df: pd.DataFrame, path: str, alarms_path=None):
         if "toplines" in df.columns:
             df["toplines"] = df["toplines"].fillna("")
         df.to_csv(output)
-        print(f"Created {path} ({len(df):,} rows)")
+        log(f"Created {path} ({len(df):,} rows)")
         return
 
     existing = pd.read_csv(output, parse_dates=["timestamp_hour"])
@@ -278,7 +283,6 @@ def save_to_csv(df: pd.DataFrame, path: str, alarms_path=None):
         fresh_alarms = fresh_alarms.set_index(["timestamp_hour", "region"])
 
         alarm_cols = fresh_alarms.columns
-        max_ts = combined.index.get_level_values("timestamp_hour").max()
         combined = combined.reset_index()
         fresh_alarms = fresh_alarms.reset_index()
 
@@ -293,7 +297,7 @@ def save_to_csv(df: pd.DataFrame, path: str, alarms_path=None):
                 combined = combined.drop(columns=[f"{col}_old"])
             combined[col] = pd.to_numeric(combined[col], errors="coerce").fillna(0)
         combined = combined.set_index(["timestamp_hour", "region"])
-        print("Alarms recomputed")
+        log("Alarms recomputed")
 
     num_cols = combined.select_dtypes(include=[np.number]).columns
     combined[num_cols] = combined[num_cols].fillna(0)
@@ -303,6 +307,6 @@ def save_to_csv(df: pd.DataFrame, path: str, alarms_path=None):
     combined.to_csv(output)
 
     if len(new_rows):
-        print(f"Appended {len(new_rows):,} rows -> {path}")
+        log(f"Appended {len(new_rows):,} rows -> {path}")
     else:
-        print("No new rows - already up to date.")
+        log("No new rows - already up to date.")

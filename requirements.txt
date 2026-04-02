@@ -118,4 +118,3 @@ zstandard==0.25.0
 boto3
 fastapi
 uvicorn[standard]
-python-dotenv

@@ -5,15 +5,10 @@ from datetime import datetime
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FULL_FILE  = os.path.join(ROOT, "datasets", "isw", "isw_data.csv")
 DAILY_FILE = os.path.join(ROOT, "datasets", "isw", "isw_daily.csv")
-LOG_FILE   = os.path.join(ROOT, "logs", "isw", "append.log")
 
 def log(msg: str):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    print(f"[{timestamp}] {msg}")
 
 def main():
     log("> ISW append starting <")

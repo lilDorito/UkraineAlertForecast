@@ -4,6 +4,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import sys
 import os
+import datetime
+
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import REGIONS

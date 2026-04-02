@@ -5,7 +5,6 @@ import sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FULL_FILE = os.path.join(ROOT, "datasets", "alarms", "alarms_data.csv")
 DAILY_FILE = os.path.join(ROOT, "datasets", "alarms", "alarms_daily.csv")
-LOG_FILE = os.path.join(ROOT, "logs", "alarms", "append.log")
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
@@ -14,12 +13,8 @@ from datetime import datetime
 KEEP = ["alarm_start", "alarm_end", "region", "region_en", "alarm_type", "duration_min"]
 
 def log(msg: str):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    print(f"[{timestamp}] {msg}")
 
 def merge_overlapping(df: pd.DataFrame) -> pd.DataFrame:
     if df.empty:

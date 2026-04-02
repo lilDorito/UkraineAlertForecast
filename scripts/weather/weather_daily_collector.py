@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "weather", "weather_daily.csv")
-LOG_FILE = os.path.join(ROOT, "logs", "weather", "daily_collector.log")
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import REGIONS
@@ -15,12 +14,8 @@ from util.regions import REGIONS
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 
 def log(msg: str):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    print(f"[{timestamp}] {msg}")
 
 def main():
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")

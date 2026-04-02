@@ -1,8 +1,9 @@
 import pandas as pd
 import os
+import datetime
 from merge_utils import (
     build_spine, merge_sources, save_to_csv,
-    process_weather, process_alarms, process_reddit,
+    process_weather, process_reddit,
     process_telegram, process_isw,
 )
 
@@ -17,6 +18,10 @@ PATHS = {
     "output": os.path.join(ROOT, "datasets/merged.csv"),
 }
 
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
+
 if __name__ == "__main__":
     # day_before_yesterday = pd.Timestamp.now("UTC").tz_localize(None).floor("D") - pd.Timedelta(days=2)
     # date_start = day_before_yesterday
@@ -26,25 +31,25 @@ if __name__ == "__main__":
     date_start = yesterday
     date_end = yesterday + pd.Timedelta(hours=23)
 
-    print(f"Daily merge for {date_start.date()}")
-    print("Building spine...")
+    log(f"Daily merge for {date_start.date()}")
+    log("Building spine...")
     spine = build_spine(str(date_start.date()), date_end)
-    print(f"  {len(spine)} rows\n")
+    log(f"  {len(spine)} rows\n")
 
-    print("Processing sources...")
+    log("Processing sources...")
     weather = process_weather(PATHS["weather"])
-    print("  [+] weather")
+    log("  [+] weather")
     alarms = pd.DataFrame(columns=["timestamp_hour", "region", "alarms_started", "alarms_ended", "alarms_active", "alarm_duration_min_sum"])
-    print("  [+] alarms (skipped - recomputed from full in save_to_csv)")
+    log("  [+] alarms")
     telegram = process_telegram(PATHS["telegram"])
-    print("  [+] telegram")
+    log("  [+] telegram")
     isw = process_isw(PATHS["isw"])
-    print("  [+] isw")
+    log("  [+] isw")
     reddit = process_reddit(PATHS["reddit"])
-    print("  [+] reddit")
+    log("  [+] reddit")
 
-    print("\nMerging...")
+    log("\nMerging...")
     df = merge_sources(spine, weather, alarms, telegram, isw, reddit)
 
-    print(f"Final shape: {df.shape}")
+    log(f"Final shape: {df.shape}")
     save_to_csv(df, PATHS["output"], alarms_path=PATHS["alarms_full"])

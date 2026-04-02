@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "telegram", "telegram_daily.csv")
 SESSION = os.path.join(ROOT, "scripts", "telegram", "session")
-LOG_FILE = os.path.join(ROOT, "logs", "telegram", "daily_collector.log")
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.text_cleaner import clean_text as clean
@@ -27,12 +26,8 @@ CHANNELS = [
 ]
 
 def log(msg: str):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    print(f"[{timestamp}] {msg}")
 
 def load_existing_ids() -> set:
     if os.path.exists(OUTPUT_FILE):

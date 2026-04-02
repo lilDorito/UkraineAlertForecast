@@ -19,6 +19,10 @@ S3_PREFIX = os.environ.get("S3_PREFIX", "predictions")
 
 TARGET_HOURS = list(range(6, 30))
 
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
+
 def upload_json(s3_client, payload: dict, key: str) -> str:
     body = json.dumps(payload, indent=2).encode("utf-8")
     s3_client.put_object(
@@ -31,13 +35,13 @@ def upload_json(s3_client, payload: dict, key: str) -> str:
     return f"s3://{S3_BUCKET}/{key}"
 
 def main():
-    print("> Loading model & region mapping...")
+    log("> Loading model & region mapping...")
     model = joblib.load(os.path.join(MODELS, "lgb_multioutput.pkl"))
     region_mapping = joblib.load(os.path.join(MODELS, "region_mapping.pkl"))
     inverse_mapping = {v: k for k, v in region_mapping.items()}
-    print(f"  [i] {len(region_mapping)} regions loaded\n")
+    log(f"  [i] {len(region_mapping)} regions loaded\n")
 
-    print("> Loading features...")
+    log("> Loading features...")
     df = pd.read_csv(FEATURES)
     df["timestamp_hour"] = pd.to_datetime(df["timestamp_hour"])
     df = df.copy()
@@ -48,13 +52,13 @@ def main():
     latest = (df.sort_values("timestamp_hour").groupby("region_id").last().reset_index())
 
     base_time = latest["timestamp_hour"].max()
-    print(f"  [i] Latest timestamp: {base_time}")
-    print(f"  [i] Regions: {len(latest)}\n")
+    log(f"  [i] Latest timestamp: {base_time}")
+    log(f"  [i] Regions: {len(latest)}\n")
 
     X_pred = latest.drop(columns=target_cols + ["timestamp_hour", "region_id"], errors="ignore").astype(np.float32)
     regions = latest["region_id"].tolist()
 
-    print("> Predicting...")
+    log("> Predicting...")
     probas = np.array([est.predict_proba(X_pred)[:, 1] for est in model.estimators_])
     global_max = probas.max()
     normalized = (probas / global_max) * 0.99
@@ -85,7 +89,7 @@ def main():
         "regions_forecast": regions_forecast,
     }
 
-    print("\n> Uploading to S3...")
+    log("\n> Uploading to S3...")
     s3 = boto3.client("s3")
 
     timestamp_str = generated_at.strftime("%Y-%m-%dT%H-%M-%SZ")
@@ -96,14 +100,14 @@ def main():
         uri_ts = upload_json(s3, output, timestamped_key)
         uri_latest = upload_json(s3, output, latest_key)
     except (BotoCoreError, ClientError) as exc:
-        print(f"\n[!] S3 upload failed: {exc}")
+        log(f"\n[!] S3 upload failed: {exc}")
         raise SystemExit(1) from exc
 
-    print(f"  [+] Timestamped: {uri_ts}")
-    print(f"  [+] Latest: {uri_latest}")
-    print(f"\n  {len(regions)} regions x {len(TARGET_HOURS)} hours")
-    print(f"  Base time: {output['base_time']}")
-    print(f"  Global max: {output['global_max_score']}")
+    log(f"  [+] Timestamped: {uri_ts}")
+    log(f"  [+] Latest: {uri_latest}")
+    log(f"\n  {len(regions)} regions x {len(TARGET_HOURS)} hours")
+    log(f"  Base time: {output['base_time']}")
+    log(f"  Global max: {output['global_max_score']}")
 
 if __name__ == "__main__":
     main()

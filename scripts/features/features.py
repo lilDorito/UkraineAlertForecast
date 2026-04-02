@@ -2,6 +2,7 @@ import pandas as pd
 import timed, alarms, weather, telegram, reddit, isw
 import sys
 import os
+import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import UA_TO_EN
@@ -9,6 +10,10 @@ from util.regions import UA_TO_EN
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 MERGED = os.path.join(ROOT, "datasets", "merged.csv")
 FEATURES = os.path.join(ROOT, "datasets", "features.csv")
+
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
 
 def add_targets(df: pd.DataFrame) -> pd.DataFrame:
     df["alarms_active"] = (df["alarms_active"] > 0).astype(int)
@@ -21,7 +26,7 @@ def add_targets(df: pd.DataFrame) -> pd.DataFrame:
 def main():
     if os.path.exists(FEATURES):
         os.remove(FEATURES)
-        print("[!] Old features deleted. Starting fresh...\n")
+        log("[!] Old features deleted. Starting fresh...\n")
 
     df = pd.read_csv(MERGED, parse_dates=["timestamp_hour"])
     df.columns = df.columns.str.strip()
@@ -31,27 +36,27 @@ def main():
 
     initial_len = len(df)
     df = df.drop_duplicates(subset=["timestamp_hour", "region_id"], keep="first")
-    print(f"Cleaned data: {initial_len} -> {len(df)} rows.")
+    log(f"Cleaned data: {initial_len} -> {len(df)} rows.")
 
     df = df.sort_values(["region_id", "timestamp_hour"]).reset_index(drop=True)
 
-    print("> Applying Timed...")
+    log("> Applying Timed...")
     df = timed.add_time_features(df)
     
-    print("> Applying Alarms...")
+    log("> Applying Alarms...")
     df = alarms.add_alarm_features(df)
     df = df.copy()
     
-    print("> Applying Weather...")
+    log("> Applying Weather...")
     df = weather.add_weather_features(df)
     df = df.copy()
     
-    print("> Applying Telegram/Reddit...")
+    log("> Applying Telegram/Reddit...")
     df = telegram.add_telegram_features(df)
     df = reddit.add_reddit_features(df)
     df = df.copy()
     
-    print("> Applying ISW...")
+    log("> Applying ISW...")
     df = isw.add_isw_features(df)
     
     df = add_targets(df)
@@ -74,7 +79,7 @@ def main():
     df[target_cols] = df[target_cols].astype("int8")
 
     df.to_csv(FEATURES, index=False)
-    print(f"\n[i] Features saved. Shape: {df.shape}")
+    log(f"\n[i] Features saved. Shape: {df.shape}")
 
 if __name__ == "__main__":
     main()

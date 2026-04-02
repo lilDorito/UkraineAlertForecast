@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import logging
+import datetime
 from typing import List, Optional, Tuple
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -108,6 +109,10 @@ _REGEX_PATTERNS: List[Tuple[re.Pattern, str]] = [
     (re.compile(r'\bзапоріжж[яі]\b', re.I), "Zaporizhzhia")
 ]
 
+def log(msg: str):
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[{timestamp}] {msg}")
+    
 def _regex_extract(text: str) -> List[str]:
     seen: set = set()
     regions: List[str] = []
@@ -537,7 +542,7 @@ def extract_regions_batch(texts: List[str], batch_size: int = 32) -> List[Option
         results.extend(batch_results)
         done = min(i + batch_size, total)
         if done % 500 == 0 or done == total:
-            print(f"  [{done}/{total}] rows processed...")
+            log(f"  [{done}/{total}] rows processed...")
 
     return results
 
@@ -558,6 +563,6 @@ def extract_all_regions_batch(texts: List[str], batch_size: int = 32) -> List[Li
         results.extend(batch_results)
         done = min(i + batch_size, total)
         if done % 500 == 0 or done == total:
-            print(f"  [{done}/{total}] rows processed...")
+            log(f"  [{done}/{total}] rows processed...")
 
     return results

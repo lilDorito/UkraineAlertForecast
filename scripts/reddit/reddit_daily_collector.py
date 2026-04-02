@@ -8,7 +8,6 @@ import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 OUTPUT_FILE = os.path.join(ROOT, "datasets", "reddit", "reddit_daily.csv")
-LOG_FILE = os.path.join(ROOT, "logs", "reddit", "daily_collector.log")
 
 sys.path.append(os.path.join(ROOT, "scripts"))
 from util.text_cleaner import clean_text as clean
@@ -24,12 +23,8 @@ HEADERS = {"User-Agent": "conflict-event-backfill/1.0"}
 ARCTIC = "https://arctic-shift.photon-reddit.com/api"
 
 def log(msg: str):
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    line = f"[{timestamp}] {msg}"
-    print(line)
-    with open(LOG_FILE, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+    print(f"[{timestamp}] {msg}")
 
 def human_delay():
     time.sleep(random.uniform(0.5, 1.5))

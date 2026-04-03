@@ -79,7 +79,7 @@ def main():
     df[target_cols] = df[target_cols].astype("int8")
 
     df.to_csv(FEATURES, index=False)
-    log(f"\n[i] Features saved. Shape: {df.shape}")
+    log(f"[i] Features saved. Shape: {df.shape}")
 
 if __name__ == "__main__":
     main()

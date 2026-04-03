@@ -48,7 +48,7 @@ if __name__ == "__main__":
     reddit = process_reddit(PATHS["reddit"])
     log("  [+] reddit")
 
-    log("\nMerging...")
+    log("Merging...")
     df = merge_sources(spine, weather, alarms, telegram, isw, reddit)
 
     log(f"Final shape: {df.shape}")

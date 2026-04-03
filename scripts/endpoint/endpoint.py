@@ -13,6 +13,20 @@ CORS(app)
 
 S3_BUCKET = os.environ["S3_BUCKET"]
 S3_PREFIX = os.environ.get("S3_PREFIX", "predictions")
+API_KEY = os.environ.get("API_KEY")
+
+@app.before_request
+def require_api_key():
+    if request.path == "/health":
+        return
+    
+    key = request.headers.get("x-api-key")
+    if key != API_KEY:
+        return jsonify({"error": "Unauthorized"}), 401
+
+@app.route("/health", methods=["GET"])
+def health():
+    return jsonify({"status": "ok"})
 
 @app.route("/latest", methods=["GET"])
 def latest():
@@ -35,4 +49,4 @@ def latest():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=os.environ.get("FLASK_DEBUG", "0") == "1")
+    app.run(host="0.0.0.0", port=port)

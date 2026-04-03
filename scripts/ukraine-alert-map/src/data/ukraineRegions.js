@@ -1,7 +1,5 @@
-// src/data/ukraineRegions.js
 import { feature } from 'topojson-client';
 
-// Повний TOPOLOGY (скопійовано з вашого оригіналу, без змін)
 const TOPOLOGY = {
   type: 'Topology',
   transform: {
@@ -47,7 +45,6 @@ const TOPOLOGY = {
 
 export const UKRAINE_GEOJSON = feature(TOPOLOGY, TOPOLOGY.objects.UKR_adm1);
 
-// ТОЧНИЙ МАПІНГ (без зайвих змінних)
 export const REGION_NAME_MAP = {
   Cherkasy: 'Cherkasy',
   Chernihiv: 'Chernihiv',

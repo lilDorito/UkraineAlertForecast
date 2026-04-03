@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import logging
-import datetime
+from datetime import datetime
 from typing import List, Optional, Tuple
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))

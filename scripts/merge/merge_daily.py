@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import datetime
+from datetime import datetime
 from merge_utils import (
     build_spine, merge_sources, save_to_csv,
     process_weather, process_reddit,

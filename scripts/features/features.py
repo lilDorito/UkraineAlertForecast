@@ -2,7 +2,7 @@ import pandas as pd
 import timed, alarms, weather, telegram, reddit, isw
 import sys
 import os
-import datetime
+from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import UA_TO_EN

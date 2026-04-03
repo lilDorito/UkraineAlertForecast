@@ -4,7 +4,7 @@ from pathlib import Path
 from tqdm import tqdm
 import sys
 import os
-import datetime
+from datetime import datetime
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import REGION_FIXES, UA_TO_EN, REGION_IDS

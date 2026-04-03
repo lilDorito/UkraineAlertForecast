@@ -2,7 +2,6 @@ import requests
 import os
 import sys
 import csv
-from datetime import date, datetime
 from bs4 import BeautifulSoup
 from datetime import date, datetime, timedelta
 

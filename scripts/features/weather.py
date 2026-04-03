@@ -4,7 +4,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 import sys
 import os
-import datetime
+from datetime import datetime
 
 def log(msg: str):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -64,7 +64,7 @@ def add_weather_features(df: pd.DataFrame) -> pd.DataFrame:
             cols = ["timestamp_hour", "region_id"] + [c for c in f_df.columns if "api_" in c]
             all_live_forecasts.append(f_df[cols])
         except Exception as e:
-            print(f"[weather] Warning: Failed to fetch live forecast for {rid}: {e}")
+            log(f"[weather] Warning: Failed to fetch live forecast for {rid}: {e}")
 
     if all_live_forecasts:
         master_f = pd.concat(all_live_forecasts)

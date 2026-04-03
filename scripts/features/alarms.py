@@ -5,7 +5,6 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from util.regions import NEIGHBORS
 
-
 def add_alarm_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 

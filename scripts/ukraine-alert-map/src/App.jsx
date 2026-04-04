@@ -15,7 +15,6 @@ export default function App() {
   const [infoOpen, setInfoOpen] = useState(false);
   const timerRef = useRef(null);
 
-  // Автоперегляд тільки коли дані завантажені
   useEffect(() => {
     if (playing && orderedTimestamps) {
       timerRef.current = setInterval(() => {
@@ -33,7 +32,6 @@ export default function App() {
     ? new Date(meta.generated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
 
-  // Стан завантаження
   if (loading) {
     return (
       <div className="app">
@@ -51,7 +49,6 @@ export default function App() {
     );
   }
 
-  // Помилка
   if (error) {
     return (
       <div className="app">
@@ -72,7 +69,6 @@ export default function App() {
     );
   }
 
-  // Якщо дані ще не готові (запасний варіант)
   if (!regions || !orderedTimestamps || orderedTimestamps.length === 0) {
     return null;
   }

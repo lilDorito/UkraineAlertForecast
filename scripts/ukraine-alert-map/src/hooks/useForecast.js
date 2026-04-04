@@ -1,4 +1,3 @@
-// src/hooks/useForecast.js
 import { useState, useEffect } from 'react';
 
 const FORCED_REGIONS = new Map([

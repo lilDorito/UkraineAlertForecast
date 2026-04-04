@@ -8,26 +8,29 @@ export default function HeatmapBar({ regions, orderedTimestamps, currentHour, on
     return vals.reduce((a, b) => a + b, 0) / vals.length;
   });
 
-  const labelIndices = [0, 4, 8, 12, 16, 20]; // 06:00, 10:00, 14:00, 18:00, 22:00, 02:00 Kyiv time
+  // Індекси для міток: 0, 4, 8, 12, 16, 20
+  const labelIndices = [0, 4, 8, 12, 16, 20];
   const labels = labelIndices.map(i => orderedTimestamps[i]?.label || '');
 
   return (
     <div className="heatmap-bar">
       <div className="heatmap-label">Hourly avg intensity · click or drag to jump</div>
-      <div className="hm-cells">
+      <div className="hm-cells" style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
         {avgProbs.map((p, i) => (
           <div
             key={i}
             className={`hm-cell${i === currentHour ? ' active' : ''}`}
-            style={{ background: probToColor(p) }}
+            style={{ background: probToColor(p), height: '24px', borderRadius: '3px', cursor: 'pointer' }}
             title={`${orderedTimestamps[i].label} · ${Math.round(p * 100)}%`}
             onClick={() => onHourChange(i)}
           />
         ))}
       </div>
-      <div className="hm-times">
-        {labels.map((label, idx) => (
-          <span key={idx}>{label}</span>
+      <div className="hm-times" style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', marginTop: '4px' }}>
+        {avgProbs.map((_, i) => (
+          <span key={i} style={{ fontSize: '9px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+            {labelIndices.includes(i) ? orderedTimestamps[i]?.label : ''}
+          </span>
         ))}
       </div>
     </div>

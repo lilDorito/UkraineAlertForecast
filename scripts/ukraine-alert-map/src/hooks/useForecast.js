@@ -1,3 +1,4 @@
+// src/hooks/useForecast.js
 import { useState, useEffect } from 'react';
 
 const FORCED_REGIONS = new Map([
@@ -39,13 +40,6 @@ function getKyivLabelFromUTC(date) {
   return hour.toString().padStart(2, '0') + ':00';
 }
 
-function reorderTimestampsStartingAtHour6(allKeys) {
-  const sorted = [...allKeys].sort((a, b) => new Date(a) - new Date(b));
-  const hour6Index = sorted.findIndex(k => new Date(k).getUTCHours() === 6);
-  if (hour6Index === -1) return sorted;
-  return [...sorted.slice(hour6Index), ...sorted.slice(0, hour6Index)];
-}
-
 export function useForecast() {
   const [state, setState] = useState({
     regions: null,
@@ -60,7 +54,6 @@ export function useForecast() {
 
     const fetchData = async () => {
       try {
-        // Для Vite
         const API_URL = import.meta.env.VITE_API_URL;
         const API_KEY = import.meta.env.VITE_API_KEY;
 
@@ -77,10 +70,10 @@ export function useForecast() {
         if (!rawRegions) throw new Error('Invalid API response');
 
         const firstRegionKey = Object.keys(rawRegions)[0];
-        const allTimestamps = Object.keys(rawRegions[firstRegionKey]);
+        const allTimestamps = Object.keys(rawRegions[firstRegionKey]).sort((a, b) => new Date(a) - new Date(b));
+
         const regionsWithForced = applyForcedRegions(rawRegions, allTimestamps);
-        const orderedKeys = reorderTimestampsStartingAtHour6(allTimestamps);
-        const orderedTimestamps = orderedKeys.map(k => {
+        const orderedTimestamps = allTimestamps.map(k => {
           const date = new Date(k);
           return {
             key: k,

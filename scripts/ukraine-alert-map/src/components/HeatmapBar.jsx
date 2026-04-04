@@ -3,12 +3,14 @@ import { probToColor } from '../utils/colors';
 export default function HeatmapBar({ regions, orderedTimestamps, currentHour, onHourChange }) {
   const regionNames = Object.keys(regions);
 
+  const POWER = 2.5;
   const avgProbs = orderedTimestamps.map(ts => {
     const vals = regionNames.map(r => regions[r][ts.key]?.probability ?? 0);
-    return vals.reduce((a, b) => a + b, 0) / vals.length;
+    const powered = vals.reduce((a, b) => a + Math.pow(b, POWER), 0) / vals.length;
+    return Math.pow(powered, 1 / POWER);
   });
 
-  // Індекси для міток: 0, 4, 8, 12, 16, 20
+  // Indices: 0, 4, 8, 12, 16, 20
   const labelIndices = [0, 4, 8, 12, 16, 20];
   const labels = labelIndices.map(i => orderedTimestamps[i]?.label || '');
 

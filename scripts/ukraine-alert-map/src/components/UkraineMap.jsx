@@ -89,6 +89,7 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               />
+              {hasAlertNow && <AlertWave cx={centroid[0]} cy={centroid[1]} />}
               {lines.map((line, i) => (
                 <text
                   key={i}
@@ -104,7 +105,6 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
                   {line}
                 </text>
               ))}
-              {hasAlertNow && <AlertWave cx={centroid[0]} cy={centroid[1]} />}
             </g>
           );
         })}

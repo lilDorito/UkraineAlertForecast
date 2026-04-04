@@ -10,11 +10,11 @@ function getNextUpdateUTC() {
 }
 
 function formatCountdown(ms) {
-  if (ms <= 0) return '0 год 0 хв 0 с';
+  if (ms <= 0) return '0 h 0 m 0 s';
   const hours = Math.floor(ms / (1000 * 60 * 60));
   const minutes = Math.floor((ms % (3600000)) / 60000);
   const seconds = Math.floor((ms % 60000) / 1000);
-  return `${hours} год ${minutes} хв ${seconds} с`;
+  return `${hours} h ${minutes} m ${seconds} с`;
 }
 
 export default function StatusPanel() {
@@ -46,9 +46,9 @@ export default function StatusPanel() {
 
   return (
     <div className="status-panel-horizontal">
-      <div className="status-item">⚪ Станом на: {formattedDateTime}</div>
-      <div className="status-item">⏳ Оновлення даних через {countdown}</div>
-      <div className="status-item">📅 щодня о 05:00 UTC</div>
+      <div className="status-item">⚪ Current: {formattedDateTime}</div>
+      <div className="status-item">⏳ Update in {countdown}</div>
+      <div className="status-item">📅 Daily at 06:00 UTC</div>
     </div>
   );
 }

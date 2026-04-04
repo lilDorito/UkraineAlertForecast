@@ -6,13 +6,12 @@ export default function InfoDrawer({ isOpen, onClose, meta }) {
         <button className="drawer-close" onClick={onClose}>×</button>
         <div className="drawer-header">
           <div className="drawer-region-name">About Forecast Data</div>
-          <div className="drawer-sub">JSON fields explanation</div>
+          <div className="drawer-sub">How to read it?</div>
         </div>
         <div className="drawer-section">
           <div className="section-label">Data source</div>
           <div className="badge-stat" style={{ padding: '12px', background: '#111118', borderRadius: '8px' }}>
             Generated at: {meta?.generated_at ? new Date(meta.generated_at).toLocaleString() : '—'}<br />
-            Base time: {meta?.base_time || '—'}<br />
             Regions: {meta?.n_regions || '—'} · Hours: {meta?.n_hours || '—'}<br />
             Global max score: {meta?.global_max_score?.toFixed(4) || '—'}
           </div>
@@ -20,20 +19,20 @@ export default function InfoDrawer({ isOpen, onClose, meta }) {
         <div className="drawer-section">
           <div className="section-label">Forecast fields per region/hour</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="badge badge-stat"><span>score</span> raw model output (0–0.48 max)</div>
+            <div className="badge badge-stat"><span>score</span> raw model output</div>
             <div className="badge badge-stat"><span>probability</span> calibrated alert likelihood (0–1)</div>
-            <div className="badge badge-stat"><span>binary</span> alert flag (true if probability ≥ threshold)</div>
+            <div className="badge badge-stat"><span>binary</span> alert flag (true if probability ≥ 0.5)</div>
           </div>
         </div>
         <div className="drawer-section">
-          <div className="section-label">Visual hints</div>
+          <div className="section-label">Important info</div>
           <div className="no-alert-text" style={{ color: 'var(--text-secondary)' }}>
-            • Map colors follow probability (green→red)<br />
-            • Red pulsing waves = alert active for current hour<br />
-            • Click any region for detailed chart & clock<br />
-            • Time shown in <strong>Kyiv local time</strong> (automatically adjusts for DST)<br />
-            • Underlying data uses UTC hours, but display is converted to Europe/Kyiv timezone<br />
-            • Luhansk & Crimea always show 99%+ probability and permanent waves
+            • Red pulsing waves = binary alert active for current hour<br />
+            • Luhansk & Crimea always show 99%+ probability as regions under full occupation and with open-ended alerts<br />
+            • Propability percentage is relative to daily global max score<br />
+            • This is a purely learning/research project<br />
+            • Sources used to predict alerts: Telegram, Reddit, ISW, OpenMeteo, alert history<br />
+            • Alerts data provider: https://alerts.in.ua/
           </div>
         </div>
         <div className="drawer-section" style={{ marginTop: '8px', borderTop: '0.5px solid var(--border)', paddingTop: '16px' }}>

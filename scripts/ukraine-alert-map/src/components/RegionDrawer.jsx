@@ -73,11 +73,11 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
             </div>
             <div className="badge badge-stat">
               <span>{currentSlot.score.toFixed(3)}</span>
-              score
+              model score
             </div>
             <div className={`badge ${isAlert ? 'badge-alert' : 'badge-safe'}`}>
               <span className={`status-pip ${isAlert ? 'pip-alert' : 'pip-safe'}`} />
-              {isAlert ? 'Alert predicted' : 'No alert'}
+              {isAlert ? 'Likely an alert' : 'Likely no alert'}
             </div>
           </div>
         )}
@@ -139,7 +139,7 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
         </div>
 
         <div className="drawer-section">
-          <div className="section-label">Navigate hours (local time)</div>
+          <div className="section-label">Navigate hours</div>
           <div className="clock-container">
             <Clock
               currentHour={localHour}

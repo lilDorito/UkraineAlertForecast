@@ -28,9 +28,13 @@ export default function App() {
 
   const handleRegionClick = useCallback((name) => setSelectedRegion(name), []);
   const handleClose = useCallback(() => setSelectedRegion(null), []);
-  const generatedAt = meta?.generated_at
-    ? new Date(meta.generated_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—';
+  const forecastDateRange = useMemo(() => {
+    if (!orderedTimestamps?.length) return '—';
+    const first = new Date(orderedTimestamps[0].key);
+    const last = new Date(orderedTimestamps[orderedTimestamps.length - 1].key);
+    const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    return `${fmt(first)} – ${fmt(last)}`;
+  }, [orderedTimestamps]);
 
   if (loading) {
     return (
@@ -43,7 +47,7 @@ export default function App() {
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <div className="badge-stat" style={{ padding: '20px' }}>Завантаження даних прогнозу...</div>
+          <div className="badge-stat" style={{ padding: '20px' }}>Loading forecast data...</div>
         </div>
       </div>
     );
@@ -61,8 +65,8 @@ export default function App() {
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#ff7070' }}>
           <div className="badge-alert" style={{ padding: '20px' }}>
-            Помилка завантаження: {error}<br />
-            Спробуйте оновити сторінку
+            Loading error: {error}<br />
+            Try refreshing the page
           </div>
         </div>
       </div>
@@ -95,9 +99,9 @@ export default function App() {
               cursor: 'pointer'
             }}
           >
-            ℹ️ Info
+            Info
           </button>
-          <div className="generated">Generated {generatedAt}</div>
+          <div className="generated">Forecast {forecastDateRange}</div>
         </div>
       </div>
 

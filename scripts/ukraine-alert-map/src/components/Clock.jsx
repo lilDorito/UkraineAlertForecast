@@ -43,8 +43,16 @@ export default function Clock({ currentHour, onHourChange, regionData, orderedTi
     const y = (clientY - rect.top) * scale - CY;
     let angle = Math.atan2(y, x) + Math.PI / 2;
     if (angle < 0) angle += 2 * Math.PI;
-    return Math.floor((angle / (2 * Math.PI)) * 24) % 24;
-  }, [currentHour]);
+    const clickedHour = (angle / (2 * Math.PI)) * 24;
+
+    let bestIdx = 0;
+    let bestDist = Infinity;
+    orderedTimestamps.forEach((ts, i) => {
+      const dist = Math.abs(((ts.hour - clickedHour + 36) % 24) - 12);
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
+    });
+    return bestIdx;
+  }, [currentHour, orderedTimestamps]);
 
   const updateHour = useCallback((e) => {
     if (!dragging.current) return;

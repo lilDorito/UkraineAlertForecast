@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 
 function getNextUpdateUTC() {
   const now = new Date();
-  let next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 5, 0, 0));
+  let next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 6, 0, 0));
   if (now >= next) {
-    next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 5, 0, 0));
+    next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 6, 0, 0));
   }
   return next;
 }
@@ -34,7 +34,7 @@ export default function StatusPanel() {
     return () => clearInterval(interval);
   }, []);
 
-  const formattedDateTime = currentTime.toLocaleString('uk-UA', {
+  const formattedDateTime = currentTime.toLocaleString('en-GB', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',

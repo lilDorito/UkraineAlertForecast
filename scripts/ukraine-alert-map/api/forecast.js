@@ -3,11 +3,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiUrl = process.env.VITE_API_URL || 'http://13.63.184.88/latest';
-  const apiKey = process.env.VITE_API_KEY;
+  const apiUrl = 'http://13.63.184.88/latest';
+  const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
-    console.error('VITE_API_KEY is not set');
+    console.error('API_KEY is not set');
     return res.status(500).json({ error: 'API key not configured' });
   }
 

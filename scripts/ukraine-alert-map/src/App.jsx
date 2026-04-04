@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import UkraineMap from './components/UkraineMap';
 import RegionDrawer from './components/RegionDrawer';
 import HeatmapBar from './components/HeatmapBar';

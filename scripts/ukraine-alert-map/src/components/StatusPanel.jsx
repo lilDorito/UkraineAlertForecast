@@ -48,7 +48,7 @@ export default function StatusPanel() {
     <div className="status-panel-horizontal">
       <div className="status-item">⚪ Current: {formattedDateTime}</div>
       <div className="status-item">⏳ Update in {countdown}</div>
-      <div className="status-item">📅 Daily at 06:00 UTC</div>
+      <div className="status-item">📅 Daily updates at 06:00 UTC</div>
     </div>
   );
 }

@@ -72,7 +72,7 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
               probability
             </div>
             <div className="badge badge-stat">
-              <span>{currentSlot.score.toFixed(3)}</span>
+              <span>{typeof currentSlot.score === 'number' ? currentSlot.score.toFixed(3) : currentSlot.score}</span>
               model score
             </div>
             <div className={`badge ${isAlert ? 'badge-alert' : 'badge-safe'}`}>

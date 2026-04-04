@@ -138,21 +138,77 @@ input[type=range].tslider { flex: 1; accent-color: #6aaa44; height: 3px; cursor:
 .drawer-region-name { font-size: 20px; font-weight: 600; color: var(--text-primary); line-height: 1.2; }
 .drawer-sub { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); margin-top: 3px; }
 
-.badges { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
-.badge { border-radius: 7px; padding: 8px 11px; font-family: var(--font-mono); font-size: 11px; }
-.badge-stat { background: #111118; border: 0.5px solid var(--border-light); color: var(--text-secondary); }
-.badge-stat span {
-  font-size: 20px; font-weight: 500; color: var(--text-primary);
-  display: block; margin-bottom: 2px; font-variant-numeric: tabular-nums;
+.badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: stretch;
 }
-.badge-alert {
-  background: #2a0f0f; border: 0.5px solid #5a1a1a; color: #ff7070;
-  display: flex; align-items: center; gap: 7px; font-size: 12px; padding: 8px 13px;
-}
+
+/* Усі три баджи мають однакову базову ширину */
+.badge-stat,
+.badge-alert,
 .badge-safe {
-  background: #0a1f0a; border: 0.5px solid #1a4a1a; color: #5acc5a;
-  display: flex; align-items: center; gap: 7px; font-size: 12px; padding: 8px 13px;
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
+
+/* Окремі стилі для badge-stat */
+.badge-stat {
+  background: #111118;
+  border: 0.5px solid var(--border-light);
+  color: var(--text-secondary);
+  padding: 8px 11px;
+  border-radius: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.badge-stat span {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: block;
+  margin-bottom: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Стилі для badge-alert та badge-safe (однакові відступи) */
+.badge-alert,
+.badge-safe {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  padding: 8px 13px;
+  border-radius: 7px;
+  font-family: var(--font-mono);
+}
+
+.badge-alert {
+  background: #2a0f0f;
+  border: 0.5px solid #5a1a1a;
+  color: #ff7070;
+}
+
+.badge-safe {
+  background: #0a1f0a;
+  border: 0.5px solid #1a4a1a;
+  color: #5acc5a;
+}
+
+.status-pip {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.pip-alert { background: #ff4444; }
+.pip-safe  { background: #44cc44; }
+
 .status-pip { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .pip-alert { background: #ff4444; }
 .pip-safe  { background: #44cc44; }
@@ -183,51 +239,36 @@ input[type=range].tslider { flex: 1; accent-color: #6aaa44; height: 3px; cursor:
 .clock-container { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .clock-time-label { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 
-badges {
+.status-panel-horizontal {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  align-items: stretch;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 10px 16px;
+  background: var(--bg-surface);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
-.badge-stat,
-.badge-alert,
-.badge-safe {
-  flex: 1;
-  min-width: 100px;
-  text-align: center;
-  justify-content: center;
-  box-sizing: border-box;
-}
-
-/* Оновлені стилі для badge-alert та badge-safe */
-.badge-alert,
-.badge-safe {
+.status-item {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  padding: 8px 13px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
-.badge-alert {
-  background: #2a0f0f;
-  border: 0.5px solid #5a1a1a;
-  color: #ff7070;
+@media (max-width: 700px) {
+  .status-panel-horizontal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .status-item {
+    white-space: normal;
+  }
 }
-
-.badge-safe {
-  background: #0a1f0a;
-  border: 0.5px solid #1a4a1a;
-  color: #5acc5a;
-}
-
-.status-pip {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.pip-alert { background: #ff4444; }
-.pip-safe  { background: #44cc44; }

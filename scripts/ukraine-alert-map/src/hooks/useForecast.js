@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import forecastRaw from '../data/forecast.json';
+import { useState, useEffect } from 'react';
 
 const FORCED_REGIONS = new Map([
   ['Luhansk', { probability: 0.99, binary: true, score: 1.0 }],
@@ -48,21 +47,74 @@ function reorderTimestampsStartingAtHour6(allKeys) {
 }
 
 export function useForecast() {
-  return useMemo(() => {
-    const rawRegions = forecastRaw.regions_forecast;
-    const firstRegionKey = Object.keys(rawRegions)[0];
-    const allTimestamps = Object.keys(rawRegions[firstRegionKey]);
-    const regionsWithForced = applyForcedRegions(rawRegions, allTimestamps);
-    const orderedKeys = reorderTimestampsStartingAtHour6(allTimestamps);
-    const orderedTimestamps = orderedKeys.map(k => {
-      const date = new Date(k);
-      return {
-        key: k,
-        label: getKyivLabelFromUTC(date),
-        hour: getKyivHourFromUTC(date),
-        utcHour: date.getUTCHours()
-      };
-    });
-    return { regions: regionsWithForced, orderedTimestamps, meta: forecastRaw };
+  const [state, setState] = useState({
+    regions: null,
+    orderedTimestamps: null,
+    meta: null,
+    loading: true,
+    error: null
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        // Для Vite
+        const API_URL = import.meta.env.VITE_API_URL;
+        const API_KEY = import.meta.env.VITE_API_KEY;
+
+        if (!API_URL) throw new Error('VITE_API_URL не задано в .env');
+        if (!API_KEY) throw new Error('VITE_API_KEY не задано в .env');
+
+        const response = await fetch(API_URL, {
+          headers: { 'x-api-key': API_KEY }
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        const rawRegions = data.regions_forecast;
+        if (!rawRegions) throw new Error('Invalid API response');
+
+        const firstRegionKey = Object.keys(rawRegions)[0];
+        const allTimestamps = Object.keys(rawRegions[firstRegionKey]);
+        const regionsWithForced = applyForcedRegions(rawRegions, allTimestamps);
+        const orderedKeys = reorderTimestampsStartingAtHour6(allTimestamps);
+        const orderedTimestamps = orderedKeys.map(k => {
+          const date = new Date(k);
+          return {
+            key: k,
+            label: getKyivLabelFromUTC(date),
+            hour: getKyivHourFromUTC(date),
+            utcHour: date.getUTCHours()
+          };
+        });
+
+        if (isMounted) {
+          setState({
+            regions: regionsWithForced,
+            orderedTimestamps,
+            meta: {
+              generated_at: data.generated_at,
+              base_time: data.base_time,
+              n_regions: data.n_regions,
+              n_hours: data.n_hours,
+              global_max_score: data.global_max_score
+            },
+            loading: false,
+            error: null
+          });
+        }
+      } catch (err) {
+        if (isMounted) {
+          setState(prev => ({ ...prev, loading: false, error: err.message }));
+        }
+      }
+    };
+
+    fetchData();
+    return () => { isMounted = false; };
   }, []);
+
+  return state;
 }

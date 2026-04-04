@@ -11,7 +11,8 @@ const StaticClock = memo(({ alarmSectors, ticks, labels }) => (
   </g>
 ));
 
-const Hand = memo(({ hour, tipColor }) => {
+const Hand = memo(({ hour, tipColor, orderedTimestamps }) => {
+  const actualHour = orderedTimestamps?.[hour]?.hour ?? hour;
   const angle = (actualHour / 24) * 2 * Math.PI - Math.PI / 2;
   const hx = CX + R * 0.58 * Math.cos(angle);
   const hy = CY + R * 0.58 * Math.sin(angle);
@@ -81,7 +82,7 @@ export default function Clock({ currentHour, onHourChange, regionData, orderedTi
   const alarmSectors = useMemo(() => {
     if (!regionData || !orderedTimestamps) return [];
     const sectors = [];
-    orderedTimestamps.forEach((ts) => {
+    orderedTimestamps.forEach((ts, i) => {
       if (regionData[ts.key]?.binary) {
         const a1 = (ts.hour / 24) * 2 * Math.PI - Math.PI / 2;
         const a2 = ((ts.hour + 1) / 24) * 2 * Math.PI - Math.PI / 2;

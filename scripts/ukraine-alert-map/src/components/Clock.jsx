@@ -12,7 +12,7 @@ const StaticClock = memo(({ alarmSectors, ticks, labels }) => (
 ));
 
 const Hand = memo(({ hour, tipColor }) => {
-  const angle = (hour / 24) * 2 * Math.PI - Math.PI / 2;
+  const angle = (actualHour / 24) * 2 * Math.PI - Math.PI / 2;
   const hx = CX + R * 0.58 * Math.cos(angle);
   const hy = CY + R * 0.58 * Math.sin(angle);
   return (
@@ -81,10 +81,10 @@ export default function Clock({ currentHour, onHourChange, regionData, orderedTi
   const alarmSectors = useMemo(() => {
     if (!regionData || !orderedTimestamps) return [];
     const sectors = [];
-    orderedTimestamps.forEach((ts, i) => {
+    orderedTimestamps.forEach((ts) => {
       if (regionData[ts.key]?.binary) {
-        const a1 = (i / 24) * 2 * Math.PI - Math.PI / 2;
-        const a2 = ((i + 1) / 24) * 2 * Math.PI - Math.PI / 2;
+        const a1 = (ts.hour / 24) * 2 * Math.PI - Math.PI / 2;
+        const a2 = ((ts.hour + 1) / 24) * 2 * Math.PI - Math.PI / 2;
         const x1 = CX + R * Math.cos(a1);
         const y1 = CY + R * Math.sin(a1);
         const x2 = CX + R * Math.cos(a2);
@@ -147,7 +147,7 @@ export default function Clock({ currentHour, onHourChange, regionData, orderedTi
       onTouchStart={onStart}
     >
       <StaticClock alarmSectors={alarmSectors} ticks={ticks} labels={labels} />
-      <Hand hour={currentHour} tipColor={tipColor} />
+      <Hand hour={currentHour} tipColor={tipColor} orderedTimestamps={orderedTimestamps} />
     </svg>
   );
 }

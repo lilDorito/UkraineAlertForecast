@@ -9,7 +9,22 @@ import './App.css';
 
 export default function App() {
   const { regions, orderedTimestamps, meta, loading, error } = useForecast();
-  const [currentHour, setCurrentHour] = useState(0);
+  const getCurrentKyivHour = () => {
+    const now = new Date();
+    const kyivHour = parseInt(
+      new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Kyiv',
+        hour: 'numeric',
+        hour12: false
+      }).format(now),
+      10
+    );
+    const idx = orderedTimestamps.findIndex(ts => ts.hour === kyivHour);
+    return idx !== -1 ? idx : 0;
+  };
+
+  const [currentHour, setCurrentHour] = useState(() => getCurrentKyivHour());
+  
   const [selectedRegion, setSelectedRegion] = useState(null);
   const [playing, setPlaying] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);

@@ -5,11 +5,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/api': {
+      '/api/forecast': {
         target: 'http://13.63.184.88',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-        configure: (proxy, options) => {
+        rewrite: () => '/latest', // ваш ендпоінт на бекенді
+        configure: (proxy) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
             const apiKey = process.env.VITE_API_KEY;
             if (apiKey) {

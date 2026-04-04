@@ -53,20 +53,12 @@ export function useForecast() {
 
     const fetchData = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL;
-        const API_KEY = import.meta.env.VITE_API_KEY;
-
-        if (!API_URL) throw new Error('VITE_API_URL не задано в .env');
-        if (!API_KEY) throw new Error('VITE_API_KEY не задано в .env');
-
-        const response = await fetch(API_URL, {
-          headers: { 'x-api-key': API_KEY }
-        });
+        const response = await fetch('/api/forecast');
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
 
         const rawRegions = data.regions_forecast;
-        if (!rawRegions) throw new Error('Invalid API response');
+        if (!rawRegions) throw new Error('Invalid API response: missing regions_forecast');
 
         const firstRegionKey = Object.keys(rawRegions)[0];
         const allTimestamps = Object.keys(rawRegions[firstRegionKey]).sort((a, b) => new Date(a) - new Date(b));

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 
 const FORCED_REGIONS = new Map([
-  ['Luhansk', { probability: 0.99, binary: true, score: 1.0 }],
-  ['Crimea', { probability: 0.99, binary: true, score: 1.0 }]
+  ['Luhansk', { probability: 0.99, binary: true, score: '-' }],
+  ['Crimea', { probability: 0.99, binary: true, score: '-' }]
 ]);
 
 function applyForcedRegions(regions, allTimestamps) {

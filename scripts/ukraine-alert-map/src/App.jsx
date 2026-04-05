@@ -117,7 +117,7 @@ export default function App() {
           >
             Info
           </button>
-          <div className="generated">Forecast {forecastDateRange}</div>
+          <div className="generated">{forecastDateRange}</div>
         </div>
       </div>
 

@@ -272,3 +272,9 @@ input[type=range].tslider { flex: 1; accent-color: #6aaa44; height: 3px; cursor:
     white-space: normal;
   }
 }
+
+@media (max-width: 600px) {
+  .title-block {
+    gap: 4px;
+  }
+}

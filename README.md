@@ -158,7 +158,7 @@ The `api/forecast.js` serverless function proxies requests from the frontend to 
 The historical dataset required to train the model is **not included** in this repository and is non-trivial to reconstruct:
 
 - **Alarm data** — requires running the historical scraper from scratch
-- **Reddit** — requires downloading raw dumps from [AcademicTorrrents](https://academictorrents.com/) archives via torrent and filtering locally
+- **Reddit** — requires downloading raw dumps from [AcademicTorrents](https://academictorrents.com/) archives via torrent and filtering locally
 - **Telegram** — requires an active Telegram account, API credentials, and time to collect history
 - **Weather & ISW** — relatively straightforward via the provided scripts
 

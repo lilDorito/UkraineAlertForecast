@@ -50,7 +50,7 @@ body {
 }
 .title-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent-red); }
 .title-meta { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
-.generated { font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); }
+.generated { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
 
 .map-wrap {
   background: var(--bg-surface);

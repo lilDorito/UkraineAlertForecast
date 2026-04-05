@@ -64,7 +64,7 @@ body {
   flex: 1; height: 4px; border-radius: 2px;
   background: linear-gradient(to right, #0a1a0a, #2e6612, #5a9e0f, #a8cc10, #e8cc00, #f09000, #e85000, #bb0000);
 }
-.legend-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); }
+.legend-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); }
 
 .heatmap-bar {
   background: var(--bg-surface);

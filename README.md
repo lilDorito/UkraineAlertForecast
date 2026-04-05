@@ -175,6 +175,7 @@ Full historical backfill can take significant time and disk space. The daily cro
 - [Open-Meteo](https://open-meteo.com) — weather forecast API
 - [LightGBM](https://lightgbm.readthedocs.io) — gradient boosting framework
 - [Vercel](https://vercel.com) — frontend hosting
+- [SanGreel](https://github.com/SanGreel/reddit-dump-extractor) — Reddit dump extractor
 - Subreddits monitored: `r/ukraine`, `r/worldnews`
 - Telegram channels monitored:
   ```

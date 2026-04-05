@@ -73,13 +73,13 @@ body {
   padding: 10px 12px;
   margin-bottom: 8px;
 }
-.heatmap-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-bottom: 6px; }
+.heatmap-label { font-family: var(--font-mono); font-size: 10px; color: var(--text-secondary); margin-bottom: 6px; }
 .hm-cells { display: flex; gap: 2px; }
 .hm-cell { flex: 1; height: 24px; border-radius: 3px; cursor: pointer; transition: transform 0.1s; }
 .hm-cell:hover { transform: scaleY(1.2); }
 .hm-cell.active { outline: 2px solid rgba(255,255,255,0.8); outline-offset: 1px; }
 .hm-times { display: flex; justify-content: space-between; margin-top: 4px; }
-.hm-times span { font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); }
+.hm-times span { font-family: var(--font-mono); font-size: 9px; color: var(--text-secondary); }
 
 .play-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
 .play-btn {

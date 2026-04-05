@@ -30,7 +30,7 @@ export default function HeatmapBar({ regions, orderedTimestamps, currentHour, on
       </div>
       <div className="hm-times" style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', marginTop: '4px' }}>
         {avgProbs.map((_, i) => (
-          <span key={i} style={{ fontSize: '9px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-dim)' }}>
+          <span key={i} style={{ fontSize: '9px', textAlign: 'center', fontFamily: 'var(--font-mono)', color: 'var(--text-secondary)' }}>
             {labelIndices.includes(i) ? orderedTimestamps[i]?.label : ''}
           </span>
         ))}

@@ -78,28 +78,41 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
             100% { r: 32; opacity: 0; }
           }
         `}</style>
-        {regionPaths.map(({ name, path, centroid, feature }) => {
+        {regionPaths.map(({ name, path, feature }) => {
           const regionData = regions[name];
           const p = regionData?.[currentTs?.key]?.probability ?? 0.05;
           const isSelected = selectedRegion === name;
+          return (
+            <path
+              key={name}
+              d={path}
+              fill={probToColor(p)}
+              stroke={isSelected ? '#ffffff' : '#0d0d18'}
+              strokeWidth={isSelected ? 2 : 0.8}
+              style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
+              onClick={() => onRegionClick(name)}
+              onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+              onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            />
+          );
+        })}
+
+        {regionPaths.map(({ name, centroid }) => {
+          const regionData = regions[name];
           const hasAlertNow = regionData?.[currentTs?.key]?.binary === true;
+          return hasAlertNow
+            ? <AlertWave key={name} cx={centroid[0]} cy={centroid[1]} />
+            : null;
+        })}
+
+        {regionPaths.map(({ name, centroid, feature }) => {
           const display = getDisplayName(feature, language);
           const lines = Array.isArray(display) ? display : [display];
           const lineH = 10;
           const totalH = lines.length * lineH;
           const startY = centroid[1] - totalH / 2 + lineH / 2;
           return (
-            <g key={name}>
-              <path
-                d={path}
-                fill={probToColor(p)}
-                stroke={isSelected ? '#ffffff' : '#0d0d18'}
-                strokeWidth={isSelected ? 2 : 0.8}
-                style={{ cursor: 'pointer', transition: 'opacity 0.2s' }}
-                onClick={() => onRegionClick(name)}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-              />
+            <g key={name} style={{ pointerEvents: 'none' }}>
               {lines.map((line, i) => (
                 <text
                   key={i}
@@ -110,12 +123,11 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
                   fontSize="9"
                   fontFamily="'DM Mono', monospace"
                   fill="rgba(255,255,255,0.65)"
-                  style={{ pointerEvents: 'none', userSelect: 'none' }}
+                  style={{ userSelect: 'none' }}
                 >
                   {line}
                 </text>
               ))}
-              {hasAlertNow && <AlertWave cx={centroid[0]} cy={centroid[1]} />}
             </g>
           );
         })}

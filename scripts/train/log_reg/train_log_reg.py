@@ -1,3 +1,5 @@
+# [Manual] script to train a Logreg model
+
 import pandas as pd
 import numpy as np
 from sklearn.linear_model import LogisticRegression

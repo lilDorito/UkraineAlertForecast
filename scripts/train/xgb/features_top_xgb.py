@@ -1,3 +1,5 @@
+# [Manual] script to generate top impactful features of saved XGBoost model
+
 import pandas as pd
 import numpy as np
 import joblib

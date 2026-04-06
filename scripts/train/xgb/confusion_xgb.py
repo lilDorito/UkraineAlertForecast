@@ -1,3 +1,5 @@
+# [Manual] script to generate a confusion matrix of saved XGBoost model
+
 import os, warnings
 import numpy as np
 import pandas as pd

@@ -1,3 +1,5 @@
+# [Manual] script for combining and filtering raw .csv files after filtering Reddit dumps
+
 import pandas as pd
 import os
 import sys

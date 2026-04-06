@@ -1,9 +1,10 @@
+# [Auto] helper-script used for filtering Reddit dumps
+
 import sys
 import json
 import csv
 import os
 import argparse
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--subreddits", required=True)

@@ -1,3 +1,5 @@
+# [Manual] script for appending telegram_daily.csv to telegram_data.csv
+
 import pandas as pd
 import os
 from datetime import datetime

@@ -1,3 +1,5 @@
+# [Auto] script for generating Telegram features
+
 import pandas as pd
 
 TG_EVENTS = [

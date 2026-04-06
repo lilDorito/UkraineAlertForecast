@@ -1,3 +1,7 @@
+# [Manual] script for scraping historical alarm data from https://alerts.in.ua/
+# [!] This is a learning/research project
+# [!] No data is distributed with this repository
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By

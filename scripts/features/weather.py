@@ -1,3 +1,5 @@
+# [Auto] script for generating weather features
+
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter

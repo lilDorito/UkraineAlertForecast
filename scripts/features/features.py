@@ -1,3 +1,5 @@
+# [Auto/Manual] script for generating features.csv dataset
+
 import pandas as pd
 import timed, alarms, weather, telegram, reddit, isw
 import sys

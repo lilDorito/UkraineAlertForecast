@@ -1,3 +1,5 @@
+# [Manual] script for merging all existing _data.csv datasets into one single merged.csv
+
 import pandas as pd
 import os
 from merge_utils import (

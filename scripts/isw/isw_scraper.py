@@ -1,3 +1,5 @@
+# [Manual] script for scraping historical ISW data
+
 import requests
 from datetime import date, timedelta, datetime
 from bs4 import BeautifulSoup

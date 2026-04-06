@@ -1,3 +1,5 @@
+# [Manual] script for appending isw_daily.csv to isw_data.csv
+
 import pandas as pd
 import os
 from datetime import datetime

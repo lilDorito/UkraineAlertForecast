@@ -1,3 +1,5 @@
+# [Manual] script to train a XGBoost model
+
 import os, warnings
 import numpy as np
 import pandas as pd

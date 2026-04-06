@@ -1,3 +1,5 @@
+# [Auto/Manual] script for collecting yesterday's weather data
+
 import requests
 import pandas as pd
 import time

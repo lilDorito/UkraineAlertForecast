@@ -1,3 +1,5 @@
+# [Manual] old irrelevant script for getting weather forecast using VisualCrossing API
+
 import requests
 import json
 import os

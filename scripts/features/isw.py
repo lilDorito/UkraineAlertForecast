@@ -1,3 +1,5 @@
+# [Auto] script for generating ISW features
+
 import pandas as pd
 import sys
 import os

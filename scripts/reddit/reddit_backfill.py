@@ -1,3 +1,5 @@
+# [Manual] script for collecting a missing period of Reddit data
+
 import requests
 import pandas as pd
 from datetime import datetime, timezone

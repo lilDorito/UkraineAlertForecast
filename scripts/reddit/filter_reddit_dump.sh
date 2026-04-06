@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# [Manual] script for filtering Reddit dumps
+
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

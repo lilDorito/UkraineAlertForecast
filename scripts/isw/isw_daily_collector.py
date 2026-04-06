@@ -1,3 +1,5 @@
+# [Auto/Manual] script for collecting yesterday's ISW data
+
 import requests
 import os
 import sys

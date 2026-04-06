@@ -1,3 +1,5 @@
+# [Manual] script for scraping historical Telegram data
+
 import pandas as pd
 from datetime import datetime, timezone
 import os

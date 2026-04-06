@@ -1,3 +1,5 @@
+# [Manual] script for combining raw .csv files after scraping alarm data
+
 import os
 import sys
 import glob

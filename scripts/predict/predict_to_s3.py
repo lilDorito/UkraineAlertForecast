@@ -1,3 +1,5 @@
+# [Auto/Manual] script for running model on generated features, output forecast to AWS S3
+
 import os
 import json
 import numpy as np

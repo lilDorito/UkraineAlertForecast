@@ -1,3 +1,5 @@
+# [Auto/Manual] script for collecting yesterday's Reddit data
+
 import requests
 import pandas as pd
 from datetime import datetime, timedelta, timezone

@@ -1,3 +1,5 @@
+# [Auto] script for endpoint
+
 import os
 import json
 import boto3

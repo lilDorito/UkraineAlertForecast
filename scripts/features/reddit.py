@@ -1,3 +1,5 @@
+# [Auto] script for generating Reddit features
+
 import pandas as pd
 
 REDDIT_EVENTS = [

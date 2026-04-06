@@ -1,3 +1,5 @@
+# [Auto] script for detecting Ukraininan geonames in cleaned text and tagging with a fitting region
+
 import os
 import re
 import sys

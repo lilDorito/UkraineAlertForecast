@@ -1,3 +1,5 @@
+# [Auto] script for generating time features
+
 import numpy as np
 import pandas as pd
 

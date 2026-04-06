@@ -1,3 +1,5 @@
+# [Auto] script for correct region mapping
+
 REGION_FIXES = {
     "Миколаїська область": "Миколаївська область",
     " Невідома": None,

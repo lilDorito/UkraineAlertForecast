@@ -1,3 +1,5 @@
+# [Auto/Manual] script for merging daily .csv files and appending into merghed.csv
+
 import pandas as pd
 import os
 from datetime import datetime

@@ -1,3 +1,5 @@
+# [Manual] script for appending weather_daily.csv to weather_data.csv
+
 import pandas as pd
 import os
 from datetime import datetime

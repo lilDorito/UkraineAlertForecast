@@ -1,3 +1,5 @@
+# [Manual] script to generate a confusion matrix of saved LogReg model
+
 import os, warnings
 import numpy as np
 import pandas as pd

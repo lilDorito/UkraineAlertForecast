@@ -1,3 +1,5 @@
+# [Auto/Manual] script for appending alarms_daily.csv to alarms_data.csv
+
 import pandas as pd
 import os
 import sys

@@ -1,3 +1,5 @@
+# [Auto/Manual] script to train a LightGBM model
+
 import os, warnings
 import numpy as np
 import pandas as pd

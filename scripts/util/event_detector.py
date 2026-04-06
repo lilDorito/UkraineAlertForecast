@@ -1,3 +1,5 @@
+# [Auto] script for detecting events in cleaned text
+
 import re
 
 PATTERNS = {

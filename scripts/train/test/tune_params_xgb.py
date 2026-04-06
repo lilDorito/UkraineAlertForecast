@@ -1,3 +1,5 @@
+# [Manual] script for tuning hyperparameters for XGBoost
+
 import pandas as pd
 import numpy as np
 import xgboost as xgb

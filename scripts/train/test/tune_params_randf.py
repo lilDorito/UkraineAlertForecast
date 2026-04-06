@@ -1,3 +1,5 @@
+# [Manual] script for tuning hyperparameters for RandomForest
+
 import pandas as pd
 import numpy as np
 import optuna

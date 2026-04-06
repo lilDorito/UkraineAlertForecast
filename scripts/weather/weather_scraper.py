@@ -1,3 +1,5 @@
+# [Manual] script for scraping historical weather data
+
 import requests
 import pandas as pd
 import time

@@ -1,3 +1,5 @@
+# [Auto/Manual] script for collecting yesterday's Telegram data
+
 import pandas as pd
 from datetime import datetime, timedelta, timezone
 import os

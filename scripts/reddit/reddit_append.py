@@ -1,3 +1,5 @@
+# [Manual] script for appending reddit_daily.csv to reddit_data.csv
+
 import pandas as pd
 import os
 from datetime import datetime

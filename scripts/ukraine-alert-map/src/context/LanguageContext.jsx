@@ -38,9 +38,10 @@ const translations = {
     current: 'Current',
     updateIn: 'Update in',
     dailyUpdates: 'Daily updates at 06:00 UTC',
+    regionDrawerSubTitle: '24-hour forecast (Kyiv local time)'
   },
   ua: {
-    appTitle: 'Прогноз Тривог в Україні',
+    appTitle: 'Ukraine Alert Forecast',
     windowDesc: '24-годинне вікно (київський час)',
     info: 'Інфо',
     generated: 'Період прогнозу',
@@ -52,7 +53,7 @@ const translations = {
     modelScore: 'оцінка моделі',
     likelyAlert: 'Тривога очікується',
     likelyNoAlert: 'Тривога не очікується',
-    fullDataComing: 'Скоро буде...',
+    fullDataComing: 'повна інфа скоро',
     probOver24h: 'Ймовірність за 24 години',
     alertHours: 'Години тривоги (binary true)',
     noAlertHours: 'Годин тривоги не передбачено',
@@ -67,15 +68,16 @@ const translations = {
     rawModelOutput: 'сирий аутпут моделі',
     calibratedLikelihood: 'калібрована ймовірність тривоги (0–1)',
     alertFlag: 'бінарне значення тривоги (true якщо ймовірність ≥ 0.5)',
-    redPulsingWaves: 'Червона пульсуюча точка = binary = true в поточну годину',
+    redPulsingWaves: 'Червона пульсуюча точка значить binary = true в поточну годину',
     luhanskCrimeaNote: 'Луганськ та Крим завжди мають 99%+ ймовірності через повну окупацію та постійні тривоги',
-    probabilityRelative: 'Відсоток ймовірності відносний до денного глобального максимального score',
+    probabilityRelative: 'Відсоток ймовірності по відношенню до денного глобального максимального score',
     learningProject: 'Це суто навчальний/дослідницький проект',
     sourcesList: 'Джерела для прогнозування: Telegram, Reddit, ISW, OpenMeteo, історія тривог',
     alertsProvider: 'Джерело даних про тривоги: https://alerts.in.ua/',
     current: 'Поточний час',
     updateIn: 'Оновлення через',
     dailyUpdates: 'Щоденне оновлення о 06:00 UTC',
+    regionDrawerSubTitle: '24-годинний прогноз (київський час)'
   },
 };
 

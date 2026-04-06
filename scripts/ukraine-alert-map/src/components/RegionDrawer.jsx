@@ -64,7 +64,7 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
 
         <div className="drawer-header">
           <div className="drawer-region-name">{displayName}</div>
-          <div className="drawer-sub">24-hour forecast (Kyiv local time)</div>
+          <div className="drawer-sub">{t('regionDrawerSubTitle')}</div>
         </div>
 
         {currentSlot && (

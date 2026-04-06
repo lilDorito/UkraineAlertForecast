@@ -22,20 +22,20 @@ export default function InfoDrawer({ isOpen, onClose, meta }) {
         <div className="drawer-section">
           <div className="section-label">{t('forecastFields')}</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="badge badge-stat"><span>score</span> raw model output</div>
-            <div className="badge badge-stat"><span>probability</span> calibrated alert likelihood (0–1)</div>
-            <div className="badge badge-stat"><span>binary</span> alert flag (true if probability ≥ 0.5)</div>
+            <div className="badge badge-stat"><span>{t('score')}</span> {t('rawModelOutput')}</div>
+            <div className="badge badge-stat"><span>probability</span> {t('calibratedLikelihood')}</div>
+            <div className="badge badge-stat"><span>{t('binary')}</span> {t('alertFlag')}</div>
           </div>
         </div>
         <div className="drawer-section">
           <div className="section-label">{t('importantInfo')}</div>
           <div className="no-alert-text" style={{ color: 'var(--text-secondary)' }}>
-            • Red pulsing waves = binary alert active for current hour<br />
-            • Luhansk & Crimea always show 99%+ probability as regions under full occupation and with open-ended alerts<br />
-            • Propability percentage is relative to daily global max score<br />
-            • This is a purely learning/research project<br />
-            • Sources used to predict alerts: Telegram, Reddit, ISW, OpenMeteo, alert history<br />
-            • Alerts data provider: https://alerts.in.ua/
+            • {t('redPulsingWaves')}<br />
+            • {t('luhanskCrimeaNote')}<br />
+            • {t('probabilityRelative')}<br />
+            • {t('learningProject')}<br />
+            • {t('sourcesList')}<br />
+            • {t('alertsProvider')}
           </div>
         </div>
         <div className="drawer-section" style={{ marginTop: '8px', borderTop: '0.5px solid var(--border)', paddingTop: '16px' }}>
@@ -49,7 +49,7 @@ export default function InfoDrawer({ isOpen, onClose, meta }) {
             color: 'var(--text-dim)',
             letterSpacing: '0.02em'
           }}>
-            <span>⚡ {t('developedBy')}</span>
+            <span>⚡ developed by</span>
             <span style={{ 
               background: 'linear-gradient(135deg, #e8d5a3, #c0a06b)',
               WebkitBackgroundClip: 'text',
@@ -58,7 +58,7 @@ export default function InfoDrawer({ isOpen, onClose, meta }) {
               fontWeight: 600,
               fontSize: '12px'
             }}>Gabella Enterprise</span>
-            <span>{t('withSupportFrom')}</span>
+            <span>with support from</span>
             <span style={{ 
               background: 'linear-gradient(135deg, #b8e1fc, #7fcdff)',
               WebkitBackgroundClip: 'text',

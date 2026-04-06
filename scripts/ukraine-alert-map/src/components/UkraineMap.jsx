@@ -35,7 +35,9 @@ function getDisplayName(feature, language) {
   const nameEn = feature.properties.NAME_EN;
   const nameUa = feature.properties.NAME_1;
   if (language === 'en') {
-    return nameEn === 'Kyiv City' ? 'Kyiv' : nameEn;
+    if (nameEn === 'Kyiv City') return 'Kyiv';
+    if (nameEn === 'Crimea') return 'Crimea';
+    return nameEn + ' region';
   }
   if (nameUa.includes('Автономна Республіка')) return ['Авт. Респ.', 'Крим'];
   if (nameUa === 'Київ' || nameUa === 'місто Київ') return ['Київ'];

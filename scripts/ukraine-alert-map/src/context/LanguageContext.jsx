@@ -107,7 +107,10 @@ export function LanguageProvider({ children }) {
     if (language === 'ua') {
       return regionNamesUa[regionKey] || regionKey;
     }
-    return regionKey.replace(/([A-Z])/g, ' $1').trim();
+    if (regionKey === 'Kyiv_City') return 'Kyiv';
+    if (regionKey === 'Crimea') return 'Crimea';
+    let baseName = regionKey.replace(/([A-Z])/g, ' $1').trim();
+    return baseName + ' region';
   };
 
   return (

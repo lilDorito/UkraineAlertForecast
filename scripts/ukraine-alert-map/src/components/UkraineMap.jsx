@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { geoPath, geoMercator } from 'd3-geo';
 import { UKRAINE_GEOJSON, REGION_NAME_MAP } from '../data/ukraineRegions';
 import { probToColor } from '../utils/colors';
+import { useLanguage } from '../context/LanguageContext';
 
 const W = 850, H = 560;
 const SKIP_REGIONS = new Set(['Sevastopol']);
@@ -30,7 +31,12 @@ function AlertWave({ cx, cy }) {
   );
 }
 
-function buildLines(nameUa) {
+function getDisplayName(feature, language) {
+  const nameEn = feature.properties.NAME_EN;
+  const nameUa = feature.properties.NAME_1;
+  if (language === 'en') {
+    return nameEn === 'Kyiv City' ? 'Kyiv' : nameEn;
+  }
   if (nameUa.includes('Автономна Республіка')) return ['Авт. Респ.', 'Крим'];
   if (nameUa === 'Київ' || nameUa === 'місто Київ') return ['Київ'];
   const base = nameUa.replace(' область', '');
@@ -38,6 +44,7 @@ function buildLines(nameUa) {
 }
 
 export default function UkraineMap({ regions, orderedTimestamps, currentHour, selectedRegion, onRegionClick }) {
+  const { language } = useLanguage();
   const currentTs = orderedTimestamps[currentHour];
   const pathGenerator = useMemo(() => {
     const projection = geoMercator().fitSize([W, H], UKRAINE_GEOJSON);
@@ -55,7 +62,7 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
         const rawCentroid = pathGenerator.centroid(feature);
         const override = CENTROID_OVERRIDE[nameEn];
         const centroid = override ? [rawCentroid[0] + (override.dx || 0), rawCentroid[1] + (override.dy || 0)] : rawCentroid;
-        return { name, nameEn, nameUa: feature.properties.NAME_1, path, centroid };
+        return { name, nameEn, nameUa: feature.properties.NAME_1, path, centroid, feature };
       }).filter(Boolean);
   }, [pathGenerator]);
 
@@ -68,12 +75,13 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
             100% { r: 32; opacity: 0; }
           }
         `}</style>
-        {regionPaths.map(({ name, path, centroid, nameUa }) => {
+        {regionPaths.map(({ name, path, centroid, feature }) => {
           const regionData = regions[name];
           const p = regionData?.[currentTs?.key]?.probability ?? 0.05;
           const isSelected = selectedRegion === name;
           const hasAlertNow = regionData?.[currentTs?.key]?.binary === true;
-          const lines = buildLines(nameUa);
+          const display = getDisplayName(feature, language);
+          const lines = Array.isArray(display) ? display : [display];
           const lineH = 10;
           const totalH = lines.length * lineH;
           const startY = centroid[1] - totalH / 2 + lineH / 2;
@@ -89,7 +97,6 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '1'}
               />
-              {hasAlertNow && <AlertWave cx={centroid[0]} cy={centroid[1]} />}
               {lines.map((line, i) => (
                 <text
                   key={i}
@@ -105,6 +112,7 @@ export default function UkraineMap({ regions, orderedTimestamps, currentHour, se
                   {line}
                 </text>
               ))}
+              {hasAlertNow && <AlertWave cx={centroid[0]} cy={centroid[1]} />}
             </g>
           );
         })}

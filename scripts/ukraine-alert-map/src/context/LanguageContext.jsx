@@ -1,4 +1,3 @@
-// src/context/LanguageContext.jsx
 import { createContext, useState, useContext, useEffect } from 'react';
 
 const translations = {
@@ -62,6 +61,35 @@ const translations = {
   },
 };
 
+const regionNamesUa = {
+  Cherkasy: 'Черкаська область',
+  Chernihiv: 'Чернігівська область',
+  Chernivtsi: 'Чернівецька область',
+  Crimea: 'Автономна Республіка Крим',
+  Dnipropetrovsk: 'Дніпропетровська область',
+  Donetsk: 'Донецька область',
+  IvanoFrankivsk: 'Івано-Франківська область',
+  Kharkiv: 'Харківська область',
+  Kherson: 'Херсонська область',
+  Khmelnytskyi: 'Хмельницька область',
+  Kirovohrad: 'Кіровоградська область',
+  Kyiv_Oblast: 'Київська область',
+  Kyiv_City: 'Київ',
+  Luhansk: 'Луганська область',
+  Lviv: 'Львівська область',
+  Mykolaiv: 'Миколаївська область',
+  Odesa: 'Одеська область',
+  Poltava: 'Полтавська область',
+  Rivne: 'Рівненська область',
+  Sumy: 'Сумська область',
+  Ternopil: 'Тернопільська область',
+  Zakarpattia: 'Закарпатська область',
+  Vinnytsia: 'Вінницька область',
+  Volyn: 'Волинська область',
+  Zaporizhzhia: 'Запорізька область',
+  Zhytomyr: 'Житомирська область',
+};
+
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
@@ -75,9 +103,15 @@ export function LanguageProvider({ children }) {
   }, [language]);
 
   const t = (key) => translations[language][key] || key;
+  const getRegionName = (regionKey) => {
+    if (language === 'ua') {
+      return regionNamesUa[regionKey] || regionKey;
+    }
+    return regionKey.replace(/([A-Z])/g, ' $1').trim();
+  };
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, getRegionName }}>
       {children}
     </LanguageContext.Provider>
   );

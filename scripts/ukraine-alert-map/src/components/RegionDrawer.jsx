@@ -4,7 +4,7 @@ import Clock from './Clock';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function RegionDrawer({ region, regionData, orderedTimestamps, currentHour, onClose }) {
-  const { t } = useLanguage();
+  const { t, getRegionName } = useLanguage();
   const isOpen = !!region;
   const [localHour, setLocalHour] = useState(currentHour);
 
@@ -34,7 +34,7 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
     : [];
 
   const alarmHours = orderedTimestamps.filter(ts => regionData?.[ts.key]?.binary);
-  const displayName = region ? region.replace(/([A-Z])/g, ' $1').trim() : '';
+  const displayName = region ? getRegionName(region) : '';
 
   const CustomDot = (props) => {
     const { cx, cy, payload } = props;

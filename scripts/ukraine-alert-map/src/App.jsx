@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import UkraineMap from './components/UkraineMap';
 import RegionDrawer from './components/RegionDrawer';
@@ -5,10 +6,12 @@ import HeatmapBar from './components/HeatmapBar';
 import InfoDrawer from './components/InfoDrawer';
 import StatusPanel from './components/StatusPanel';
 import { useForecast } from './hooks/useForecast';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import './App.css';
 
-export default function App() {
+function AppContent() {
   const { regions, orderedTimestamps, meta, loading, error } = useForecast();
+  const { t, language, setLanguage } = useLanguage();
   const [currentHour, setCurrentHour] = useState(0);
 
   useEffect(() => {
@@ -57,13 +60,13 @@ export default function App() {
       <div className="app">
         <div className="header">
           <div className="title-block">
-            <span className="title-text">Ukraine Alert Forecast</span>
+            <span className="title-text">{t('appTitle')}</span>
             <span className="title-dot" />
-            <span className="title-meta">Loading...</span>
+            <span className="title-meta">{t('windowDesc')}</span>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <div className="badge-stat" style={{ padding: '20px' }}>Loading forecast data...</div>
+          <div className="badge-stat" style={{ padding: '20px' }}>{t('loading')}</div>
         </div>
       </div>
     );
@@ -74,15 +77,15 @@ export default function App() {
       <div className="app">
         <div className="header">
           <div className="title-block">
-            <span className="title-text">Ukraine Alert Forecast</span>
+            <span className="title-text">{t('appTitle')}</span>
             <span className="title-dot" />
-            <span className="title-meta">Error</span>
+            <span className="title-meta">{t('windowDesc')}</span>
           </div>
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#ff7070' }}>
           <div className="badge-alert" style={{ padding: '20px' }}>
-            Loading error: {error}<br />
-            Try refreshing the page
+            {t('error')}: {error}<br />
+            {t('tryReload')}
           </div>
         </div>
       </div>
@@ -97,9 +100,9 @@ export default function App() {
     <div className="app">
       <div className="header">
         <div className="title-block">
-          <span className="title-text">Ukraine Alert Forecast</span>
+          <span className="title-text">{t('appTitle')}</span>
           <span className="title-dot" />
-          <span className="title-meta">24h window (Kyiv local time)</span>
+          <span className="title-meta">{t('windowDesc')}</span>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
@@ -115,9 +118,26 @@ export default function App() {
               cursor: 'pointer'
             }}
           >
-            Info
+            {t('info')}
           </button>
-          <div className="generated">{forecastDateRange}</div>
+          <select
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            style={{
+              background: 'var(--bg-card)',
+              border: '0.5px solid var(--border-light)',
+              borderRadius: '20px',
+              padding: '4px 10px',
+              color: 'var(--text-secondary)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '11px',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="en">EN</option>
+            <option value="ua">UA</option>
+          </select>
+          <div className="generated">{t('generated')} {forecastDateRange}</div>
         </div>
       </div>
 
@@ -163,5 +183,13 @@ export default function App() {
 
       <InfoDrawer isOpen={infoOpen} onClose={() => setInfoOpen(false)} meta={meta} />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <AppContent />
+    </LanguageProvider>
   );
 }

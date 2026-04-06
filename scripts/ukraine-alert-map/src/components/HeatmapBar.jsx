@@ -1,6 +1,9 @@
+// src/components/HeatmapBar.jsx
 import { probToColor } from '../utils/colors';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function HeatmapBar({ regions, orderedTimestamps, currentHour, onHourChange }) {
+  const { t } = useLanguage();
   const regionNames = Object.keys(regions);
 
   const POWER = 2.5;
@@ -10,13 +13,12 @@ export default function HeatmapBar({ regions, orderedTimestamps, currentHour, on
     return Math.pow(powered, 1 / POWER);
   });
 
-  // Indices: 0, 4, 8, 12, 16, 20
   const labelIndices = [0, 4, 8, 12, 16, 20];
   const labels = labelIndices.map(i => orderedTimestamps[i]?.label || '');
 
   return (
     <div className="heatmap-bar">
-      <div className="heatmap-label">Hourly avg intensity · click or drag to jump</div>
+      <div className="heatmap-label">{t('hourlyAvg')}</div>
       <div className="hm-cells" style={{ display: 'grid', gridTemplateColumns: 'repeat(24, 1fr)', gap: '2px' }}>
         {avgProbs.map((p, i) => (
           <div

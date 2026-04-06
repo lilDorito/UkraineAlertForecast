@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import Clock from './Clock';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function RegionDrawer({ region, regionData, orderedTimestamps, currentHour, onClose }) {
+  const { t } = useLanguage();
   const isOpen = !!region;
   const [localHour, setLocalHour] = useState(currentHour);
 
@@ -69,15 +71,15 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
           <div className="badges">
             <div className="badge badge-stat">
               <span>{Math.round(currentSlot.probability * 100)}%</span>
-              probability
+              {t('probability')}
             </div>
             <div className="badge badge-stat">
               <span>{typeof currentSlot.score === 'number' ? currentSlot.score.toFixed(3) : currentSlot.score}</span>
-              model score
+              {t('modelScore')}
             </div>
             <div className={`badge ${isAlert ? 'badge-alert' : 'badge-safe'}`}>
               <span className={`status-pip ${isAlert ? 'pip-alert' : 'pip-safe'}`} />
-              {isAlert ? 'Likely an alert' : 'Likely no alert'}
+              {isAlert ? t('likelyAlert') : t('likelyNoAlert')}
             </div>
           </div>
         )}
@@ -85,13 +87,13 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
         {!regionData && (
           <div className="badges">
             <div className="badge badge-stat">
-              <span>—</span>full data coming
+              <span>—</span>{t('fullDataComing')}
             </div>
           </div>
         )}
 
         <div className="drawer-section">
-          <div className="section-label">Probability over 24h</div>
+          <div className="section-label">{t('probOver24h')}</div>
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={160}>
               <AreaChart data={chartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -121,7 +123,7 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
         </div>
 
         <div className="drawer-section">
-          <div className="section-label">Alert hours (binary true)</div>
+          <div className="section-label">{t('alertHours')}</div>
           <div className="alarm-hours">
             {alarmHours.length > 0
               ? alarmHours.map(ts => (
@@ -133,13 +135,13 @@ export default function RegionDrawer({ region, regionData, orderedTimestamps, cu
                     {ts.label}
                   </span>
                 ))
-              : <span className="no-alert-text">No alert hours predicted</span>
+              : <span className="no-alert-text">{t('noAlertHours')}</span>
             }
           </div>
         </div>
 
         <div className="drawer-section">
-          <div className="section-label">Navigate hours</div>
+          <div className="section-label">{t('navigateHours')}</div>
           <div className="clock-container">
             <Clock
               currentHour={localHour}

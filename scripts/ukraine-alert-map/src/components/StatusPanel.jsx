@@ -1,4 +1,6 @@
+// src/components/StatusPanel.jsx
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 function getNextUpdateUTC() {
   const now = new Date();
@@ -18,6 +20,7 @@ function formatCountdown(ms) {
 }
 
 export default function StatusPanel() {
+  const { t } = useLanguage();
   const [currentTime, setCurrentTime] = useState(new Date());
   const [countdown, setCountdown] = useState('');
 
@@ -46,9 +49,9 @@ export default function StatusPanel() {
 
   return (
     <div className="status-panel-horizontal">
-      <div className="status-item">⚪ Current: {formattedDateTime}</div>
-      <div className="status-item">⏳ Update in {countdown}</div>
-      <div className="status-item">📅 Daily updates at 06:00 UTC</div>
+      <div className="status-item">⚪ {t('current')}: {formattedDateTime}</div>
+      <div className="status-item">⏳ {t('updateIn')} {countdown}</div>
+      <div className="status-item">📅 {t('dailyUpdates')}</div>
     </div>
   );
 }

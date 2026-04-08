@@ -6,7 +6,7 @@ export default function HeatmapBar({ regions, orderedTimestamps, currentHour, on
   const { t } = useLanguage();
   const regionNames = Object.keys(regions);
 
-  const POWER = 3.5;
+  const POWER = 2.7;
   const avgProbs = orderedTimestamps.map(ts => {
     const vals = regionNames.map(r => regions[r][ts.key]?.probability ?? 0);
     const powered = vals.reduce((a, b) => a + Math.pow(b, POWER), 0) / vals.length;

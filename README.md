@@ -1,34 +1,34 @@
 # Ukraine Alert Forecast
- 
+
 A machine learning system that forecasts air raid alert probabilities across all Ukrainian regions for the next 24 hours. Predictions are served via a REST API and visualized on an interactive map updated daily.
- 
+
 **Live:** [ukraine-alert-forecast.vercel.app](https://ukraine-alert-forecast.vercel.app)
- 
+
 ---
- 
+
 ## Overview
- 
+
 The system collects data from multiple sources daily, merges it and appends to a historical dataset, engineers features, retrains a LightGBM model, and publishes a 24-hour per-region forecast every morning. The frontend displays the forecast as a heatmap over a Ukraine map with hourly resolution.
- 
+
 ---
- 
+
 ## Architecture
- 
-### Backend (AWS EC2 Ubuntu):
-- Cron Jobs (nightly pipeline):
+
+### Backend (AWS EC2 Ubuntu)
+- Cron jobs run a nightly pipeline:
   - Data collectors (alarms, Reddit, Telegram, weather, ISW)
   - Merging + feature engineering
   - Model retraining (LightGBM multioutput)
-  - Prediction -> S3
-- Flask + Gunicorn -> /latest endpoint
+  - Prediction generation -> uploaded to S3 at `s3://{S3_BUCKET}/{S3_PREFIX}/latest.json`
+- Flask + Gunicorn serve the `/latest` endpoint, reading the latest prediction from S3
 
 ### Frontend (Vercel)
-- api/forecast.js  (serverless proxy)
+- `api/forecast.js` — serverless proxy
 - React + Vite app
-- Connected to backend via HTTP (x-api-key)
- 
+- Connected to backend via HTTP (`x-api-key`)
+
 ### Nightly Pipeline (UTC)
- 
+
 | Time  | Job |
 |-------|-----|
 | 02:00 | Collect alarm data |
@@ -40,51 +40,56 @@ The system collects data from multiple sources daily, merges it and appends to a
 | 04:15 | Merge all sources |
 | 04:30 | Generate features |
 | 04:45 | Retrain LightGBM model |
-| 05:55 | Generate predictions -> publish |
- 
+| 05:55 | Generate predictions -> publish to S3 |
+
 ---
- 
+
 ## Data
- 
+
 | Type | Description |
-|--------|-------------|
-| **Alarm data** | Historical air raid alert records per region |
+|------|-------------|
+| **Alarms** | Historical air raid alert records per region |
 | **Weather** | Daily weather features per region |
 | **Telegram** | Telegram channel monitoring |
 | **Reddit** | Reddit posts filtered for conflict content |
 | **ISW** | Institute for the Study of War daily toplines |
- 
+
 ---
- 
+
 ## Model
- 
+
 - **Algorithm:** LightGBM multioutput classifier
-- **Task:** Probability score per region per hour + binary classification on calibrated probability (alert/no alert)
+- **Task:** Probability score per region per hour + binary classification on calibrated probability (alert / no alert)
 - **Features:** Lag features from alarm history, weather, NLP signals from Telegram/Reddit/ISW, temporal features (hour, day of week, etc.)
 - **Retraining:** Daily, automatically via cron
 - **Alternatives evaluated:** Logistic Regression, Linear Regression, Random Forest, XGBoost
- 
+
+**Pipeline performance (average across daily retrains):**
+
+| Metric | Score |
+|--------|-------|
+| F1 Score | ~0.819 |
+| Prec | ~0.812 |
+| Recall | ~0.825 |
+| AUC-ROC | ~0.923 |
+
 ---
- 
+
 ## Frontend
- 
+
 Built with **React + Vite**, deployed on **Vercel**.
- 
-### Stack
+
 - React 18
-- Custom SVG Ukraine map
- 
-### Features
 - Interactive choropleth map colored by alert probability
-- 24-hour heatmap bar (click or drag to jump)
+- 24-hour heatmap bar (click or drag to jump to any hour)
 - Per-region drawer with probability chart, alert hours, and analog clock
 - Playback animation across hours
 - Auto-updates daily at 06:00 UTC
- 
+
 ---
- 
+
 ## Repository Structure
- 
+
 ```
 UkraineAlertForecast/
 ├── datasets/           # Raw and processed data (.csv)
@@ -105,50 +110,170 @@ UkraineAlertForecast/
 ├── requirements.txt    # .venv requirements
 └── setup.sh            # Setup script for folders & structure
 ```
- 
+
 ---
- 
+
 ## Setup & Deployment
- 
-### Backend (EC2)
- 
+
+### 1. Clone & Environment
+
 ```bash
-# Clone and set up environment
 git clone https://github.com/lilDorito/UkraineAlertForecast
 cd UkraineAlertForecast
 bash setup.sh
 
-# Fill in your credentials
 cp .env.example .env
- 
-# Activate venv and install dependencies
+# Fill in all credentials (see sections below)
+
 source .venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Run the Flask endpoint
+---
+
+### 2. API Keys & Credentials
+
+#### alerts.in.ua API Key
+
+The alarm data collector uses the [alerts.in.ua](https://alerts.in.ua/) API.
+
+1. Go to [alerts.in.ua](https://alerts.in.ua/)
+2. Navigate to **About us** -> **API** (available only on Ukrainian language page)
+3. Fill in the form thoughtfully and wait for an email with key (should not take more than 48h)
+4. Copy the key into your `.env`:
+
+```env
+ALERTS_IN_UA_API_KEY=your-alerts-in-ua-api-key
+```
+
+#### Telegram API ID & Hash (Telethon)
+
+Telegram data is collected via [Telethon](https://docs.telethon.dev/), which requires an active Telegram account and an API app.
+
+1. Sign in to [my.telegram.org](https://my.telegram.org) with your Telegram phone number
+2. Go to **API development tools**
+3. Fill in the form (App title and short name can be anything, e.g. `AlertForecast`)
+4. Click **Create application** — you'll receive your `api_id` and `api_hash`
+5. Copy them into your `.env`:
+
+```env
+TELEGRAM_API_ID=your-telegram-api-id
+TELEGRAM_API_HASH=your-telegram-api-hash
+```
+
+> **Note:** On the first run, Telethon will prompt you to authenticate with your phone number and a one-time code sent by Telegram. A session file will be created locally so subsequent runs don't require re-authentication.
+
+---
+
+### 3. S3 & IAM (Prediction Storage)
+
+Predictions are uploaded to S3 after each nightly run and read back by the Flask endpoint to serve forecasts.
+
+#### Create the S3 bucket
+
+```bash
+aws s3 mb s3://your-bucket-name --region your-region
+```
+
+#### Create an IAM policy
+
+Save the following as `s3-forecast-policy.json`, replacing `your-bucket-name`:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::your-bucket-name",
+        "arn:aws:s3:::your-bucket-name/predictions/*"
+      ]
+    }
+  ]
+}
+```
+
+#### Create an IAM user and attach the policy
+
+```bash
+# Create the policy
+aws iam create-policy \
+  --policy-name UkraineAlertS3Policy \
+  --policy-document file://s3-forecast-policy.json
+
+# Create a dedicated IAM user
+aws iam create-user --user-name ukraine-alert-bot
+
+# Attach the policy (replace YOUR_ACCOUNT_ID)
+aws iam attach-user-policy \
+  --user-name ukraine-alert-bot \
+  --policy-arn arn:aws:iam::YOUR_ACCOUNT_ID:policy/UkraineAlertS3Policy
+
+# Generate access keys
+aws iam create-access-key --user-name ukraine-alert-bot
+```
+
+Copy the returned `AccessKeyId` and `SecretAccessKey` into your `.env`:
+
+```env
+AWS_ACCESS_KEY_ID=your-access-key-id
+AWS_SECRET_ACCESS_KEY=your-secret-access-key
+AWS_DEFAULT_REGION=your-region
+S3_BUCKET=your-bucket-name
+S3_PREFIX=predictions
+```
+
+---
+
+### 4. Backend (EC2)
+
+Set up cron jobs as described in the pipeline table above.
+
+Run the Flask endpoint:
+
+```bash
 gunicorn -w 2 -b 0.0.0.0:80 scripts.endpoint.endpoint:app
 ```
- 
-Set up cron jobs as described in the pipeline table above.
- 
-Required environment variables / secrets:
-[env.example](https://github.com/lilDorito/UkraineAlertForecast/blob/main/.env.example)
- 
-### Frontend (Vercel)
- 
+
+#### EC2 environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `TELEGRAM_API_ID` | Telegram app ID from my.telegram.org |
+| `TELEGRAM_API_HASH` | Telegram app hash from my.telegram.org |
+| `ALERTS_IN_UA_API_KEY` | alerts.in.ua API key |
+| `AWS_ACCESS_KEY_ID` | IAM user access key |
+| `AWS_SECRET_ACCESS_KEY` | IAM user secret key |
+| `AWS_DEFAULT_REGION` | AWS region of your S3 bucket |
+| `S3_BUCKET` | S3 bucket name for prediction storage |
+| `S3_PREFIX` | Key prefix for predictions (e.g. `predictions`) |
+| `API_KEY` | Secret key used to authenticate frontend -> backend requests |
+
+See [.env.example](./.env.example) for the full template.
+
+---
+
+### 5. Frontend (Vercel)
+
 ```bash
 cd scripts/ukraine-alert-map
 npm install
-npm run dev          # local dev
-npm run build        # production build
+npm run dev       # local dev
+npm run build     # production build
 ```
- 
-Deploy by connecting the repo to Vercel. Set the following environment variable in Vercel dashboard:
- 
+
+Deploy by connecting the repo to Vercel. Set the following environment variable in the Vercel dashboard:
+
 | Variable | Description |
 |----------|-------------|
-| `API_KEY` | Key for authenticating requests to the EC2 endpoint |
- 
+| `API_KEY` | Must match the `API_KEY` set on the EC2 backend |
+
 The `api/forecast.js` serverless function proxies requests from the frontend to the EC2 backend, injecting the API key server-side.
 
 ---
@@ -165,14 +290,16 @@ The historical dataset required to train the model is **not included** in this r
 Full historical backfill can take significant time and disk space. The daily cron pipeline assumes this data already exists.
 
 **This repo is primarily a reference implementation.** The live deployment at [ukraine-alert-forecast.vercel.app](https://ukraine-alert-forecast.vercel.app) runs on a private dataset built over time.
- 
+
 ---
- 
+
 ## Credits & Sources
- 
+
 - [alerts.in.ua](https://alerts.in.ua/) — historical & daily alert data
 - [Institute for the Study of War (ISW)](https://www.understandingwar.org) — historical & daily toplines
-- [Open-Meteo](https://open-meteo.com) — weather forecast API
+- [Open-Meteo](https://open-meteo.com) — weather forecast & historical data API
+- [Arctic Shift](https://arctic-shift.photon-reddit.com/) — Reddit submissions/comments scraping API
+- [Telethon](https://tl.telethon.dev/) — Telegram post scraping API
 - [LightGBM](https://lightgbm.readthedocs.io) — gradient boosting framework
 - [Vercel](https://vercel.com) — frontend hosting
 - [SanGreel](https://github.com/SanGreel/reddit-dump-extractor) — Reddit dump extractor
@@ -183,11 +310,11 @@ Full historical backfill can take significant time and disk space. The daily cro
   @ukrpravda_news, @pravda_ukraineee, @suspilnenews, @uniannet,
   @hromadske_ua, @war_monitor, @nexta_live, @GeneralStaffZSU, @kpszsu
   ```
- 
+
 ---
- 
+
 ## License
 
 This is a learning/research project. No data is distributed with this repository.
- 
+
 See [LICENSE](./LICENSE).

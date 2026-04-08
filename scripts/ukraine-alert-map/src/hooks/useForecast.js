@@ -64,7 +64,8 @@ export function useForecast() {
         const allTimestamps = Object.keys(rawRegions[firstRegionKey]).sort((a, b) => new Date(a) - new Date(b));
 
         const regionsWithForced = applyForcedRegions(rawRegions, allTimestamps);
-        const orderedTimestamps = allTimestamps.map(k => {
+
+        const mapped = allTimestamps.map(k => {
           const date = new Date(k);
           return {
             key: k,
@@ -73,6 +74,11 @@ export function useForecast() {
             utcHour: date.getUTCHours()
           };
         });
+
+        const startIdx = mapped.findIndex(ts => ts.utcHour === 6);
+        const orderedTimestamps = startIdx > 0
+          ? [...mapped.slice(startIdx), ...mapped.slice(0, startIdx)]
+          : mapped;
 
         if (isMounted) {
           setState({

@@ -12,6 +12,21 @@ The system collects data from multiple sources daily, merges it and appends to a
 
 ---
 
+## ⚠️ Data Collection Notice
+
+The historical dataset required to train the model is **not included** in this repository and is non-trivial to reconstruct:
+
+- **Alarm data** — requires running the historical scraper from scratch
+- **Reddit** — requires downloading raw dumps from [AcademicTorrents](https://academictorrents.com/) archives via torrent and filtering locally
+- **Telegram** — requires an active Telegram account, API credentials, and time to collect history
+- **Weather & ISW** — relatively straightforward via the provided scripts
+
+Full historical backfill can take significant time and disk space. The daily cron pipeline assumes this data already exists.
+
+**This repo is primarily a reference implementation.** The live deployment at [ukraine-alert-forecast.vercel.app](https://ukraine-alert-forecast.vercel.app) runs on a private dataset built over time.
+
+---
+
 ## Architecture
 
 ### Backend (AWS EC2 Ubuntu)
@@ -124,9 +139,6 @@ bash setup.sh
 
 cp .env.example .env
 # Fill in all credentials (see sections below)
-
-source .venv/bin/activate
-pip install -r requirements.txt
 ```
 
 ---
@@ -235,11 +247,108 @@ S3_PREFIX=predictions
 
 Set up cron jobs as described in the pipeline table above.
 
-Run the Flask endpoint:
+Install system dependencies:
 
 ```bash
-gunicorn -w 2 -b 0.0.0.0:80 scripts.endpoint.endpoint:app
+sudo apt update
+sudo apt install nginx
 ```
+
+Then install Python dependencies into the venv:
+
+```bash
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+#### 4.1 Test the endpoint
+
+Before setting up a persistent service, verify the app runs correctly:
+
+```bash
+cd /path/to/UkraineAlertForecast
+.venv/bin/gunicorn -w 4 -b 0.0.0.0:5000 scripts.endpoint.endpoint:app
+```
+
+#### 4.2 Run as a systemd service
+
+To keep the endpoint running persistently across reboots, set it up as a systemd service.
+
+Create the service file:
+
+```bash
+sudo nano /etc/systemd/system/flaskapp.service
+```
+
+Paste the following, adjusting paths to your repo location:
+
+```ini
+[Unit]
+Description=Flask (Gunicorn) Latest Endpoint
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/path/to/UkraineAlertForecast
+EnvironmentFile=/path/to/UkraineAlertForecast/.env
+ExecStart=/path/to/UkraineAlertForecast/.venv/bin/gunicorn \
+    --chdir /path/to/UkraineAlertForecast \
+    -w 4 \
+    -b 0.0.0.0:5000 \
+    --access-logfile - \
+    --error-logfile - \
+    scripts.endpoint.endpoint:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start the service:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable flaskapp
+sudo systemctl start flaskapp
+sudo systemctl status flaskapp
+```
+
+#### 4.3 Set up Nginx reverse proxy
+
+Gunicorn listens on port 5000. Nginx sits in front and exposes the endpoint on port 80.
+
+Create a site config:
+
+```bash
+sudo nano /etc/nginx/sites-available/ukraine-alert-forecast
+```
+
+Paste the following, replacing the IP with your EC2 instance's address:
+
+```nginx
+server {
+    listen 80;
+    server_name your-ec2-ip;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Enable the config and restart Nginx:
+
+```bash
+sudo ln -s /etc/nginx/sites-available/ukraine-alert-forecast /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+The endpoint will now be reachable at `http://your-ec2-ip/latest`.
 
 #### EC2 environment variables
 
@@ -256,41 +365,6 @@ gunicorn -w 2 -b 0.0.0.0:80 scripts.endpoint.endpoint:app
 | `API_KEY` | Secret key used to authenticate frontend -> backend requests |
 
 See [.env.example](./.env.example) for the full template.
-
----
-
-### 5. Frontend (Vercel)
-
-```bash
-cd scripts/ukraine-alert-map
-npm install
-npm run dev       # local dev
-npm run build     # production build
-```
-
-Deploy by connecting the repo to Vercel. Set the following environment variables in the Vercel dashboard:
-
-| Variable | Description |
-|----------|-------------|
-| `API_KEY` | Must match the `API_KEY` set on the EC2 backend |
-| `EC2_HOST` | EC2 instance URL (e.g. `http://13.63.184.88`) |
-
-The `api/forecast.js` serverless function proxies requests from the frontend to the EC2 backend, injecting the API key server-side.
-
----
-
-## ⚠️ Data Collection Notice
-
-The historical dataset required to train the model is **not included** in this repository and is non-trivial to reconstruct:
-
-- **Alarm data** — requires running the historical scraper from scratch
-- **Reddit** — requires downloading raw dumps from [AcademicTorrents](https://academictorrents.com/) archives via torrent and filtering locally
-- **Telegram** — requires an active Telegram account, API credentials, and time to collect history
-- **Weather & ISW** — relatively straightforward via the provided scripts
-
-Full historical backfill can take significant time and disk space. The daily cron pipeline assumes this data already exists.
-
-**This repo is primarily a reference implementation.** The live deployment at [ukraine-alert-forecast.vercel.app](https://ukraine-alert-forecast.vercel.app) runs on a private dataset built over time.
 
 ---
 

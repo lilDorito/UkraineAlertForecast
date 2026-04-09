@@ -59,6 +59,28 @@ Full historical backfill can take significant time and disk space. The daily cro
 
 ---
 
+## API
+
+The backend exposes a simple REST API for retrieving the latest forecast.
+
+### Endpoints
+
+#### `GET /latest`
+> Returns the full 24-hour forecast for all regions.
+
+#### `GET /health`
+> Returns the service status.
+
+### Authentication
+
+All requests (except `/health`) require an API key:
+
+```http
+x-api-key: <API_KEY>
+```
+
+---
+
 ## Data
 
 | Type | Description |

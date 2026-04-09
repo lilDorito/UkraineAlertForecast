@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/forecast': {
-        target: 'http://13.63.184.88',
+        target: process.env.EC2_HOST,
         changeOrigin: true,
         rewrite: () => '/latest',
         configure: (proxy) => {

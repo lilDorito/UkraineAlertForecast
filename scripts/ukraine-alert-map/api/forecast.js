@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiUrl = 'http://13.63.184.88/latest';
+  const apiUrl = `${process.env.EC2_HOST}/latest`;
   const apiKey = process.env.API_KEY;
 
   if (!apiKey) {

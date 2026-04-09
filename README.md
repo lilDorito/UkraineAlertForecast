@@ -390,6 +390,26 @@ See [.env.example](./.env.example) for the full template.
 
 ---
 
+### 5. Frontend (Vercel)
+
+```bash
+cd scripts/ukraine-alert-map
+npm install
+npm run dev       # local dev
+npm run build     # production build
+```
+
+Deploy by connecting the repo to Vercel. Set the following environment variables in the Vercel dashboard:
+
+| Variable | Description |
+|----------|-------------|
+| `API_KEY` | Must match the `API_KEY` set on the EC2 backend |
+| `EC2_HOST` | EC2 instance URL (e.g. `http://13.63.184.88`) |
+
+The `api/forecast.js` serverless function proxies requests from the frontend to the EC2 backend, injecting the API key server-side.
+
+---
+
 ## Credits & Sources
 
 - [alerts.in.ua](https://alerts.in.ua/) — historical & daily alert data

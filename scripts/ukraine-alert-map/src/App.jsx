@@ -54,8 +54,12 @@ function AppContent() {
     const fmt = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Europe/Kyiv' });
     const firstDate = fmt(first);
     const lastDate = fmt(last);
-    if (firstDate === lastDate) return `${firstDate} · ${orderedTimestamps[0].label} – ${orderedTimestamps[orderedTimestamps.length - 1].label}`;
-    return `${firstDate} ${orderedTimestamps[0].label} – ${lastDate} ${orderedTimestamps[orderedTimestamps.length - 1].label}`;
+    if (firstDate === lastDate) {
+      const nextDay = new Date(first);
+      nextDay.setDate(nextDay.getDate() + 1);
+      return `${firstDate} – ${fmt(nextDay)}`;
+    }
+    return `${firstDate} – ${lastDate}`;
   }, [orderedTimestamps]);
 
   if (loading) {
